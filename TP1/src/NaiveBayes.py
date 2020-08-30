@@ -1,12 +1,12 @@
-# datasets es una lista de DataFrame
-# to_analize es una lista con los valores a analizar
 def len_datasets(datasets):
     return sum([len(dataset) for dataset in datasets])
+
 
 class NaiveBayes:
     probabilities = []
     datasets = None
 
+    # datasets es una lista de DataFrames
     def train(self, datasets):
         self.datasets = datasets
         self.probabilities = []
@@ -27,6 +27,7 @@ class NaiveBayes:
 
             self.probabilities.append(probabilities)
 
+    # to_analize es una lista con los valores a analizar
     def calculate_category(self, to_analize):
         results = []
         for j in range(0, len(self.probabilities)):
