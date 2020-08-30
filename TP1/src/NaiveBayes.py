@@ -36,6 +36,6 @@ class NaiveBayes:
             for i in range(0, len(to_analize)):
                 property_dict = probability[i]
                 result *= property_dict[to_analize[i]]
-            result *= len(self.datasets) / len_datasets(self.datasets)
+            result *= len(self.datasets[j]) / len_datasets(self.datasets)
             results.append(result)
         return results.index(max(results))
