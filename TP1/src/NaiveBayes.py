@@ -7,13 +7,23 @@ class NaiveBayes:
     datasets = None
 
     # datasets es una lista de DataFrames
-    def train(self, datasets):
+    def train(self, datasets, possible_values = None):
         self.datasets = datasets
         self.probabilities = []
         for dataset in datasets:
             probabilities = []
             for i in range(0, len(dataset.columns)):
-                occurrences_map = {}
+                if possible_values is None:
+                    occurrences_map = {0: 0, 1: 0}
+                else:
+                    occurrences_map = {}
+                    if isinstance(possible_values[0], list):
+                        for value in possible_values[i]:
+                            occurrences_map[value] = 0
+                    else:
+                        for value in possible_values:
+                            occurrences_map[value] = 0
+
                 for item in dataset[dataset.columns[i]]:
                     if item in occurrences_map:
                         occurrences_map[item] += 1
@@ -26,6 +36,7 @@ class NaiveBayes:
                 probabilities.append(occurrences_map)
 
             self.probabilities.append(probabilities)
+        print(self.probabilities)
 
     # to_analize es una lista con los valores a analizar
     def calculate_category(self, to_analize):
@@ -38,4 +49,5 @@ class NaiveBayes:
                 result *= property_dict[to_analize[i]]
             result *= len(self.datasets[j]) / len_datasets(self.datasets)
             results.append(result)
+
         return results.index(max(results))
