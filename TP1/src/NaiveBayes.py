@@ -36,7 +36,6 @@ class NaiveBayes:
                 probabilities.append(occurrences_map)
 
             self.probabilities.append(probabilities)
-        print(self.probabilities)
 
     # to_analize es una lista con los valores a analizar
     def calculate_category(self, to_analize):
