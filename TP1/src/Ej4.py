@@ -1,9 +1,15 @@
 from TP1.src.BayesNetwork import BayesNetwork
 import pandas as pd
 
-bn = BayesNetwork()
+data = pd.read_csv('../dataset/binary.csv')
 
-print("Resultado: " + str(bn.conditional_probability({'admit': 1}, {'rank': 2, 'gre': 0, 'gpa': 1})))
+data['gre'] = (data['gre'] >= 500).astype(int)
+data['gpa'] = (data['gpa'] >= 3).astype(int)
+
+bn = BayesNetwork(data, {'rank': [], 'gre': ['rank'], 'gpa': ['rank'], 'admit': ['gre', 'gpa', 'rank']}, {'rank': [1, 2, 3, 4], 'gre': [0, 1], 'gpa': [0, 1], 'admit': [0, 1]})
+
+print("P(admit = 0 | rank = 1) = " + str(bn.conditional_probability({'admit': 0}, {'rank': 1})))
+print("P(admit = 1 | rank = 2, gre = 0, gpa = 1) = " + str(bn.conditional_probability({'admit': 1}, {'rank': 2, 'gre': 0, 'gpa': 1})))
 
 #
 # data = pd.read_csv('../binary.csv')

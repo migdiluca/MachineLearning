@@ -4,21 +4,40 @@ import pandas as pd
 
 
 class BayesNetwork:
-    probabilities = []
+    probabilities = {}
     nodes = []
-    parents = {'rank': [], 'gre': ['rank'], 'gpa': ['rank'], 'admit': ['gre', 'gpa', 'rank']}
-    node_values = {'rank': [1, 2, 3, 4], 'gre': [0, 1], 'gpa': [0, 1], 'admit': [0, 1]}
+    parents = None
+    node_values = None
     data = None
 
-    def __init__(self):
-        data = pd.read_csv('../dataset/binary.csv')
-        self.data = self.discretizar(data)
+    def __init__(self, data, parents, node_values):
+        self.data = data
         self.nodes = data.columns.values
+        self.parents = parents
+        self.node_values = node_values
 
-    def discretizar(self, data):
-        data['gre'] = (data['gre'] >= 500).astype(int)
-        data['gpa'] = (data['gpa'] > 3).astype(int)
-        return data
+    def get_probabilities(self):
+        for node in self.nodes:
+            results = []
+            for value in self.node_values[node]:
+                result = []
+                self.joint_solver({node: value}, self.parents[node], result)
+                results += result
+            self.probabilities[node] = results
+
+    def joint_solver(self, conditions, missing_nodes, result):
+        if len(missing_nodes) == 0:
+            result.append({'probability': self.conditional_solver(conditions), 'conditions': copy.deepcopy(conditions)})
+            return
+
+        new_missing_nodes = copy.deepcopy(missing_nodes)
+        selected_missing = new_missing_nodes.pop()
+        for value in self.node_values[selected_missing]:
+            new_conditions = copy.deepcopy(conditions)
+            new_conditions[selected_missing] = value
+            self.joint_solver(new_conditions, new_missing_nodes, result)
+
+        return result
 
     def joint_probability(self, conditions, missing_nodes):
         if len(missing_nodes) == 0:
@@ -44,8 +63,7 @@ class BayesNetwork:
                 for parent in self.parents[condition]:
                     denominador = denominador[denominador[parent] == conditions[parent]]
 
-                nominador = copy.deepcopy(denominador)
-                nominador = nominador[nominador[condition] == conditions[condition]]
+                nominador = denominador[denominador[condition] == conditions[condition]]
                 result *= (len(nominador) + 1) / (len(denominador) + 1)
 
         return result
@@ -55,6 +73,5 @@ class BayesNetwork:
         all_conditions.update(principal_condition)
         missing_nodes = [item for item in self.nodes if item not in all_conditions.keys()]
         missing_nodes_2 = [item for item in self.nodes if item not in conditions.keys()]
-        one = self.joint_probability(all_conditions, copy.deepcopy(missing_nodes))
-        two = self.joint_probability(conditions, copy.deepcopy(missing_nodes_2))
-        return one/two
+
+        return self.joint_probability(all_conditions, missing_nodes) / self.joint_probability(conditions, missing_nodes_2)
