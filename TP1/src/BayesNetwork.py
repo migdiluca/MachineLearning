@@ -47,7 +47,7 @@ class BayesNetwork:
                 nominador = copy.deepcopy(denominador)
                 nominador = nominador[nominador[condition] == conditions[condition]]
                 result *= (len(nominador) + 1) / (len(denominador) + 1)
-        print(result)
+
         return result
 
     def conditional_probability(self, principal_condition, conditions):
@@ -55,11 +55,6 @@ class BayesNetwork:
         all_conditions.update(principal_condition)
         missing_nodes = [item for item in self.nodes if item not in all_conditions.keys()]
         missing_nodes_2 = [item for item in self.nodes if item not in conditions.keys()]
-        print("MISSING NODES")
-        print(missing_nodes)
         one = self.joint_probability(all_conditions, copy.deepcopy(missing_nodes))
-        print("--------------------")
-        print("MISSING NODES2")
-        print(missing_nodes_2)
         two = self.joint_probability(conditions, copy.deepcopy(missing_nodes_2))
         return one/two
