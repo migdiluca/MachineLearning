@@ -11,9 +11,8 @@ def confusion_matrix(nb: NaiveBayes, test: List[pd.DataFrame]):
     for i in range(len(test)):
         matrix_row = [0] * len(test)
         for index, row in test[i].iterrows():
-            res = nb.calculate_category(row)
+            res = nb.calculate_category(row.values)
             matrix_row[res] += 1
-        print(matrix_row)
         matrix.append(matrix_row)
     return matrix
 
@@ -25,8 +24,8 @@ def add_columns_from_text(df: pd.DataFrame):
 
         for w in words:
             if w not in df:
-                df[w] = [0] * len(df)
-            row[w] = 1
+                df[w] = [0] * len(df.values)
+            df.at[index, w] = 1
 
     return df
 
@@ -44,15 +43,15 @@ def run():
 
     df = df[['titular', 'categoria']]
 
+    df = add_columns_from_text(df)
+
     train = df.sample(frac=0.8)
     test = df.drop(train.index)
 
     categories = get_categories(df)[0:4]
 
-    print(categories)
-
-    train_datasets = separate_in_categories(add_columns_from_text(train), categories)
-    test_datasets = separate_in_categories(add_columns_from_text(test), categories)
+    train_datasets = separate_in_categories(train, categories)
+    test_datasets = separate_in_categories(test, categories)
 
     for d in train_datasets: print(len(d))
 
@@ -62,7 +61,10 @@ def run():
     nb = NaiveBayes()
     nb.train(train_datasets)
 
-    confusion_matrix(nb, test_datasets)
+    res = confusion_matrix(nb, test_datasets)
+    res = {categories[i]: {categories[j]: res[i][j] for j in range(len(res[i]))} for i in range(len(res))}
+
+    print(pd.DataFrame.from_dict(res))
 
 
 run()
