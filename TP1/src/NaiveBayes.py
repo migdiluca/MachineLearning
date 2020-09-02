@@ -20,20 +20,26 @@ class NaiveBayes:
             for i in range(0, len(dataset.columns)):
                 if len(self.general_probabilities) <= i:
                     self.general_probabilities.append({})
+                    if possible_values is None:
+                        self.general_probabilities[i] = {0: 0, 1: 0}
+                    else:
+                        if isinstance(possible_values[0], list):
+                            for value in possible_values[i]:
+                                self.general_probabilities[i][value] = 0
+                        else:
+                            for value in possible_values:
+                                self.general_probabilities[i][value] = 0
 
                 if possible_values is None:
                     occurrences_map = {0: 0, 1: 0}
-                    self.general_probabilities[i] = {0: 0, 1: 0}
                 else:
                     occurrences_map = {}
                     if isinstance(possible_values[0], list):
                         for value in possible_values[i]:
                             occurrences_map[value] = 0
-                            self.general_probabilities[i] = 0
                     else:
                         for value in possible_values:
                             occurrences_map[value] = 0
-                            self.general_probabilities[i] = 0
 
                 for item in dataset[dataset.columns[i]]:
                     if item in occurrences_map:
