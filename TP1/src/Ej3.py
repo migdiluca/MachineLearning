@@ -1,6 +1,7 @@
 import pandas as pd
 import re
-
+import numpy as np
+import matplotlib.pyplot as plt
 from typing import List
 
 from TP1.src.NaiveBayes import NaiveBayes
@@ -38,6 +39,67 @@ def separate_in_categories(df: pd.DataFrame, categories: List[str]):
     return [df[df['categoria'] == cat] for cat in categories]
 
 
+def get_metrics(c_matrix: List[List[float]], categories: List[str]):
+    all_metrics = {}
+    for i in range(len(categories)):
+        category = categories[i]
+
+        tp = c_matrix[i][i]
+        fn = sum([c_matrix[i][j] for j in range(len(categories)) if j != i])
+        fp = sum([c_matrix[j][i] for j in range(len(categories)) if j != i])
+
+        tn = - tp
+        for a in range(len(categories)):
+            for b in range(len(categories)):
+                tn += c_matrix[a][b]
+
+        acc = (tp + tn) / (tp + tn + fn + tn)
+        pres = tp / (tp + fp)
+        recall = tp / tp + fn
+        f1_score = (2 * pres * recall) / (pres + recall)
+
+        tp_rate = tp / (tp + fn)
+        fp_rate = fp / (fp + tn)
+
+        all_metrics[category] = {
+            'TP': tp,
+            'FN': fn,
+            'FP': fp,
+            'TN': tn,
+            'Accuracy': acc,
+            'Precision': pres,
+            'F1-Score': f1_score,
+            'FP-Rate': fp_rate,
+            'TP-Rate': tp_rate
+        }
+    return all_metrics
+
+
+def invert_dict(dic):
+    inverted_dict = {}
+    for (k, v) in dic.items():
+        for (k_, v_) in v.items():
+            if k_ not in inverted_dict:
+                inverted_dict[k_] = {}
+
+            inverted_dict[k_][k] = v_
+
+    return inverted_dict
+
+
+def roc_curve(metrics_dic):
+
+    for k, v in metrics_dic.items():
+        plt.scatter(v['FP-Rate'], v['TP-Rate'], label=k)
+
+    plt.legend()
+    plt.ylim(ymin=0, ymax=1)
+    plt.xlim(xmin=0, xmax=1)
+    plt.xlabel('FP-Rate')
+    plt.ylabel('TP-Rate')
+    plt.show()
+
+
 def run():
     df = pd.read_csv('../dataset/Noticias_argentinas.csv', nrows=1000)
 
@@ -62,9 +124,15 @@ def run():
     nb.train(train_datasets)
 
     res = confusion_matrix(nb, test_datasets)
-    res = {categories[i]: {categories[j]: res[i][j] for j in range(len(res[i]))} for i in range(len(res))}
+    res_dic = {categories[i]: {categories[j]: res[i][j] for j in range(len(res[i]))} for i in range(len(res))}
 
-    print(pd.DataFrame.from_dict(res))
+    print(pd.DataFrame.from_dict(res_dic))
+
+    metrics_dic = get_metrics(res, categories)
+    print(pd.DataFrame.from_dict(invert_dict(metrics_dic)))
+
+    roc_curve(metrics_dic)
+
 
 
 run()
