@@ -132,7 +132,3 @@ def run():
     print(pd.DataFrame.from_dict(invert_dict(metrics_dic)))
 
     roc_curve(metrics_dic)
-
-
-
-run()
