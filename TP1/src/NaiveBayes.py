@@ -69,6 +69,5 @@ class NaiveBayes:
             result *= len(self.datasets[j]) / len_datasets(self.datasets)
             results.append(result)
 
-        asd = results.index(max(results))
-        return asd
+        return results.index(max(results))
 
