@@ -34,7 +34,7 @@ public class KNNInstance<T> {
         Comparator<Point> comparator = Comparator.comparingDouble(a -> a.v.distance(vec));
 
         List<Point> kClosest = map.stream()
-                .sorted(comparator.reversed())
+                .sorted(comparator)
                 .limit(k)
                 .collect(Collectors.toList());
 

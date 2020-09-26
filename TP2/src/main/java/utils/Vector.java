@@ -55,7 +55,7 @@ public class Vector {
 
         List<Double> newValues = new ArrayList<>();
         for(int i = 0; i < a.values.size(); i++){
-            newValues.add(a.values.get(i) - a.values.get(i));
+            newValues.add(a.values.get(i) - b.values.get(i));
         }
 
         return new Vector(newValues);
