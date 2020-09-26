@@ -18,6 +18,38 @@ public class Ejercicio1 {
         Double textSentiment;
         Double sentimentValue;
         Integer starRating;
+
+        Double titleSentiment_sentimentValue;
+
+        static Function<Double, Double> wordCountNormalizer,
+                titleSentimentNormalizer,
+                sentimentValueNormalizer,
+                titleSentiment_SentimentValueNormalizer;
+
+        List<Double> toList(){
+            List<Double> values = new ArrayList<>();
+            values.add(wordCountNormalizer.apply(wordCount));
+            values.add(titleSentimentNormalizer.apply(titleSentiment));
+            values.add(sentimentValueNormalizer.apply(sentimentValue));
+            values.add(titleSentiment_SentimentValueNormalizer.apply(titleSentiment_sentimentValue));
+            return values;
+        }
+
+        public static void setWordCountNormalizer(Function<Double, Double> wordCountNormalizer) {
+            Review.wordCountNormalizer = wordCountNormalizer;
+        }
+
+        public static void setTitleSentimentNormalizer(Function<Double, Double> titleSentimentNormalizer) {
+            Review.titleSentimentNormalizer = titleSentimentNormalizer;
+        }
+
+        public static void setSentimentValueNormalizer(Function<Double, Double> sentimentValueNormalizer) {
+            Review.sentimentValueNormalizer = sentimentValueNormalizer;
+        }
+
+        public static void setTitleSentiment_SentimentValueNormalizer(Function<Double, Double> titleSentiment_SentimentValueNormalizer) {
+            Review.titleSentiment_SentimentValueNormalizer = titleSentiment_SentimentValueNormalizer;
+        }
     }
 
     private static final List<Review> data = new ArrayList<>();
@@ -65,6 +97,8 @@ public class Ejercicio1 {
         newReview.starRating = Integer.valueOf(row.get("Star Rating"));
         newReview.sentimentValue = Double.valueOf(row.get("sentimentValue"));
 
+        newReview.titleSentiment_sentimentValue = newReview.titleSentiment * newReview.sentimentValue;
+
         return newReview;
     }
 
@@ -97,7 +131,8 @@ public class Ejercicio1 {
 
         DivideTrainAndTest.Division<Review> division = DivideTrainAndTest.divide(data, trainRate);
 
-        System.out.printf("Divided data in %.2f%% train data and %.2f%% test data.\n", trainRate * 100, (1 - trainRate) * 100);
+        System.out.printf("Divided data in %.2f%% train data and %.2f%% test data.\n", trainRate * 100,
+                (1 - trainRate) * 100);
 
         return division;
     }
@@ -122,15 +157,19 @@ public class Ejercicio1 {
         double minSentimentValue = division.train.stream()
                 .mapToDouble(v->v.sentimentValue).min().orElseThrow(IllegalArgumentException::new);
 
-        Function<Double, Double> wordCountNormalizer = normalize(maxWordCount, minWordCount);
-        Function<Double, Double> titleSentimentNormalizer = normalize(maxTitleSentiment, minTitleSentiment);
-        Function<Double, Double> sentimentValueNormalizer = normalize(maxSentimentValue, minSentimentValue);
+        double maxTitleSentiment_SentimentValue = division.train.stream()
+                .mapToDouble(v->v.titleSentiment_sentimentValue).max().orElseThrow(IllegalArgumentException::new);
+        double minTitleSentiment_SentimentValue = division.train.stream()
+                .mapToDouble(v->v.titleSentiment_sentimentValue).min().orElseThrow(IllegalArgumentException::new);
+
+        Review.setWordCountNormalizer(normalize(maxWordCount, minWordCount, 100.0));
+        Review.setTitleSentimentNormalizer(normalize(maxTitleSentiment, minTitleSentiment, 100.0));
+        Review.setSentimentValueNormalizer(normalize(maxSentimentValue, minSentimentValue, 100.0));
+        Review.setTitleSentiment_SentimentValueNormalizer(
+                normalize(maxTitleSentiment_SentimentValue, minTitleSentiment_SentimentValue, 0.0));
 
         for(Review review : division.train){
-            List<Double> values = new ArrayList<>();
-            values.add(wordCountNormalizer.apply(review.wordCount));
-            values.add(titleSentimentNormalizer.apply(review.titleSentiment));
-            values.add(sentimentValueNormalizer.apply(review.sentimentValue));
+            List<Double> values = review.toList();
 
             knnInstance.train(values, review.starRating);
         }
@@ -140,10 +179,7 @@ public class Ejercicio1 {
 
         testResults = new HashMap<>();
         for(Review review : division.test){
-            List<Double> values = new ArrayList<>();
-            values.add(wordCountNormalizer.apply(review.wordCount));
-            values.add(titleSentimentNormalizer.apply(review.titleSentiment));
-            values.add(sentimentValueNormalizer.apply(review.sentimentValue));
+            List<Double> values = review.toList();
 
             Integer classifyResult = knnInstance.classify(values, 5, false);
 
@@ -158,10 +194,7 @@ public class Ejercicio1 {
 
         testResults = new HashMap<>();
         for(Review review : division.test){
-            List<Double> values = new ArrayList<>();
-            values.add(sentimentValueNormalizer.apply(review.wordCount));
-            values.add(titleSentimentNormalizer.apply(review.titleSentiment));
-            values.add(sentimentValueNormalizer.apply(review.sentimentValue));
+            List<Double> values = review.toList();
 
             Integer classifyResult = knnInstance.classify(values, 5, true);
 
@@ -201,11 +234,11 @@ public class Ejercicio1 {
                     .mapToInt(Integer::intValue)
                     .sum();
 
-            System.out.printf("Precision for %s: %.2f\n", a, Double.compare(p, 0) == 0 ? 1 : (double) tp / p);
+            System.out.printf("Precision for %s: %.2f\n", a, Double.compare(p, 0) == 0 ? '-' : (double) tp / p);
         }
     }
 
-    private static Function<Double, Double> normalize(Double max, Double min){
-        return a -> 100 * (a - min) / (max - min);
+    private static Function<Double, Double> normalize(Double max, Double min, Double scale){
+        return a -> scale * (a - min) / (max - min);
     }
 }
