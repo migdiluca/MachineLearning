@@ -6,9 +6,7 @@ import utils.DivideTrainAndTest;
 import utils.Vector;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 public class Ejercicio1 {
@@ -27,13 +25,12 @@ public class Ejercicio1 {
     public static void run(){
         System.out.println("Ejercicio 1 ########");
 
-        System.out.println("a)");
+        System.out.println("\na)");
         a();
-        System.out.println("b)");
+        System.out.println("\nb)");
         DivideTrainAndTest.Division<Review> division = b();
-        System.out.println("c)");
+        System.out.println("\nc/d)");
         c(division);
-        System.out.println("d)");
     }
 
     private static Review rowMapper(Map<String, String> row){
@@ -139,29 +136,73 @@ public class Ejercicio1 {
         }
 
         //Test
-        int matches = 0;
+        Map<Integer, Map<Integer, Integer>> testResults;
+
+        testResults = new HashMap<>();
         for(Review review : division.test){
             List<Double> values = new ArrayList<>();
             values.add(wordCountNormalizer.apply(review.wordCount));
             values.add(titleSentimentNormalizer.apply(review.titleSentiment));
             values.add(sentimentValueNormalizer.apply(review.sentimentValue));
 
-            matches += knnInstance.classify(values, 5, false).equals(review.starRating) ? 1 : 0;
+            Integer classifyResult = knnInstance.classify(values, 5, false);
+
+            Map<Integer, Integer> map =
+                    Optional.ofNullable(testResults.get(review.starRating)).orElse(new HashMap<>());
+            map.put(classifyResult, 1 + Optional.ofNullable(map.get(classifyResult)).orElse(0));
+            testResults.put(review.starRating, map);
         }
 
-        System.out.printf("KNN matched %s out of %s.\n", matches, division.test.size());
+        System.out.println("\nKNN confusion matrix");
+        plotConfusionMatrix(testResults);
 
-        matches = 0;
+        testResults = new HashMap<>();
         for(Review review : division.test){
             List<Double> values = new ArrayList<>();
             values.add(sentimentValueNormalizer.apply(review.wordCount));
             values.add(titleSentimentNormalizer.apply(review.titleSentiment));
             values.add(sentimentValueNormalizer.apply(review.sentimentValue));
 
-            matches += knnInstance.classify(values, 5, true).equals(review.starRating) ? 1 : 0;
+            Integer classifyResult = knnInstance.classify(values, 5, true);
+
+            Map<Integer, Integer> map =
+                    Optional.ofNullable(testResults.get(review.starRating)).orElse(new HashMap<>());
+            map.put(classifyResult, 1 + Optional.ofNullable(map.get(classifyResult)).orElse(0));
+            testResults.put(review.starRating, map);
         }
 
-        System.out.printf("KNN weighted matched %s out of %s.\n", matches, division.test.size());
+        System.out.println("\nKNN weighted confusion matrix");
+        plotConfusionMatrix(testResults);
+    }
+
+    private static <T> void plotConfusionMatrix(Map<T, Map<T, Integer>> results){
+        List<T> categories = new LinkedList<>(results.keySet());
+
+        categories.forEach(v-> System.out.printf("%s\t", v));
+        System.out.print("\n");
+
+        System.out.println("-------------------");
+
+        for(T a : categories){
+            for(T b : categories){
+                System.out.printf("%s", Optional.ofNullable(results.get(a).get(b)).orElse(0));
+                System.out.print("\t");
+            }
+            System.out.print("\n");
+        }
+
+        System.out.println();
+
+        for(T a : categories){
+            int tp = Optional.ofNullable(results.get(a)).map(v->v.get(a)).orElse(0);
+
+            int p = results.values().stream()
+                    .map(v->Optional.ofNullable(v.get(a)).orElse(0))
+                    .mapToInt(Integer::intValue)
+                    .sum();
+
+            System.out.printf("Precision for %s: %.2f\n", a, Double.compare(p, 0) == 0 ? 1 : (double) tp / p);
+        }
     }
 
     private static Function<Double, Double> normalize(Double max, Double min){

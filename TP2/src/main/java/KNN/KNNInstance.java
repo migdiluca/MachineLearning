@@ -60,16 +60,22 @@ public class KNNInstance<T> {
         T maxCategory = null;
         double maxValue = 0;
 
-        Map<T, Integer> infinitiesCount = new HashMap<>();
+        Map<T, Long> infinitiesCount = new HashMap<>();
 
         for(T category: categories){
-            double newValue = closest.stream().mapToDouble(
-                    c -> c.category == category ? weight(vec, c.v) : 0
-            ).sum();
+            List<Double> values = closest.stream()
+                    .filter(c->c.category.equals(category))
+                    .map(c->weight(vec, c.v))
+                    .collect(Collectors.toList());
 
-            if(Double.compare(newValue, Double.POSITIVE_INFINITY) == 0){
-                infinitiesCount.put(category, 1 + Optional.ofNullable(infinitiesCount.get(category)).orElse(0));
-            }
+            infinitiesCount.put(category,
+                    values.stream()
+                            .filter(v->Double.compare(v, Double.POSITIVE_INFINITY) == 0)
+                            .mapToDouble(Double::doubleValue)
+                            .count()
+            );
+
+            double newValue = values.stream().mapToDouble(Double::doubleValue).sum();
 
             if(newValue > maxValue){
                 maxValue = newValue;
@@ -78,9 +84,9 @@ public class KNNInstance<T> {
         }
 
         if(infinitiesCount.size() != 0){
-            int maxCount = 0;
-            for(Map.Entry<T, Integer> entry: infinitiesCount.entrySet()){
-                int newCount = entry.getValue();
+            long maxCount = 0;
+            for(Map.Entry<T, Long> entry: infinitiesCount.entrySet()){
+                long newCount = entry.getValue();
 
                 if(newCount > maxCount){
                     maxCategory = entry.getKey();
