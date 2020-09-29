@@ -88,7 +88,7 @@ public class RunExercices {
         i = 0;
         for (int limitNodes = 25; limitNodes >= 0; limitNodes -= 1) {
             double testPercentage = 0.2;
-            try (BufferedWriter bf = new BufferedWriter(new FileWriter("./results/ID3WithDepthLimit/run" + i))) {
+            try (BufferedWriter bf = new BufferedWriter(new FileWriter("./results/ID3WithLimit/run" + i))) {
                 int corrects = 0, incorrects = 0;
                 for(int j = 0; j < 10; j++) {
                     int[][] confusionMatrix = ID3.run(testPercentage, 0, limitNodes);

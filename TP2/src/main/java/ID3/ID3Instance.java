@@ -67,7 +67,6 @@ public class ID3Instance {
 
 
     private Node recursiveID3(DataFrame df, String columnName, int limitNodes, int limitDepth) {
-        //Solo queda Survived
         if (columnName == null || df.getColumnNames().size() < 2 || (limitingDepth && limitDepth == 0) || df.size() <= minTableValues) {
             String nodeValue = "Yes";
             if (df.percentage(0.0, "Survived") < 0.5)
@@ -116,24 +115,22 @@ public class ID3Instance {
     public String classify(Map<String, Object> conditions) {
         int result = 0;
         for (Node root : roots) {
-            if (classifyRecursive(root, conditions, root).equals("Yes")) {
+            if (classifyRecursive(root, conditions).equals("Yes")) {
                 result++;
             } else {
                 result--;
             }
         }
-        if(result == 0)
-            System.out.println("NDEAH");
         return result > 0 ? "Yes" : "No";
     }
 
-    private String classifyRecursive(Node currentNode, Map<String, Object> conditions, Node root) {
+    private String classifyRecursive(Node currentNode, Map<String, Object> conditions) {
         if (currentNode.getValue().equals("Yes") || currentNode.getValue().equals("No"))
             return currentNode.getValue();
 
         for (Edge edge : currentNode.getEdges()) {
             if (edge.getValue().equals(conditions.get(currentNode.getValue()))) {
-                return classifyRecursive(edge.getNode(), conditions, root);
+                return classifyRecursive(edge.getNode(), conditions);
             }
         }
 
