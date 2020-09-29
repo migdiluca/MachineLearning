@@ -9,8 +9,14 @@ public class ID3Instance {
 
     private DataFrame dataFrame;
     private List<Node> roots;
+    private int limitDepth;
+    private boolean limitingDepth;
+
+    private int minTableValues = 0;
 
     public ID3Instance() {
+        this.roots = new ArrayList<>();
+        this.limitingDepth = false;
         this.roots = new ArrayList<>();
     }
 
@@ -19,7 +25,20 @@ public class ID3Instance {
         this.roots = new ArrayList<>();
     }
 
-    public void run(int limitNodes) throws IOException {
+    public ID3Instance(int limitDepth) {
+        this.limitDepth = limitDepth;
+        this.limitingDepth = true;
+        this.roots = new ArrayList<>();
+    }
+
+    public ID3Instance(DataFrame dataFrame, int limitDepth) {
+        this.dataFrame = dataFrame;
+        this.limitDepth = limitDepth;
+        this.limitingDepth = true;
+        this.roots = new ArrayList<>();
+    }
+
+    public void train(int limitNodes) throws IOException {
         double generalEntropy = ShannonEntropy.getGeneralEntropy(dataFrame.percentage(1.0, "Survived"), dataFrame.percentage(0.0, "Survived"));
         Map<String, Double> gain = new HashMap<>();
         List<String> columnNames = new ArrayList<>(dataFrame.getColumnNames());
@@ -34,7 +53,7 @@ public class ID3Instance {
             }
         }
 
-        roots.add(recursiveID3(dataFrame, getMaxGainAttribute(gain), limitNodes));
+        roots.add(recursiveID3(dataFrame, getMaxGainAttribute(gain), limitNodes, limitDepth));
     }
 
     private double getAttributesGain(String columnName, DataFrame dataFrame) {
@@ -47,9 +66,9 @@ public class ID3Instance {
     }
 
 
-    private Node recursiveID3(DataFrame df, String columnName, int limitNodes) {
+    private Node recursiveID3(DataFrame df, String columnName, int limitNodes, int limitDepth) {
         //Solo queda Survived
-        if (columnName == null || df.getColumnNames().size() < 2) {
+        if (columnName == null || df.getColumnNames().size() < 2 || (limitingDepth && limitDepth == 0) || df.size() <= minTableValues) {
             String nodeValue = "Yes";
             if (df.percentage(0.0, "Survived") < 0.5)
                 nodeValue = "No";
@@ -84,10 +103,10 @@ public class ID3Instance {
             if (newDf.size() == 0) {
                 newDf = df.clone();
                 newDf.remove(columnName);
-                node.addEdge(value, recursiveID3(newDf, null, limitNodes));
+                node.addEdge(value, recursiveID3(newDf, null, limitNodes, limitDepth - 1));
             } else {
                 newDf.remove(columnName);
-                node.addEdge(value, recursiveID3(newDf, getMaxGainAttribute(gain), limitNodes));
+                node.addEdge(value, recursiveID3(newDf, getMaxGainAttribute(gain), limitNodes, limitDepth - 1));
             }
 
         }
@@ -132,6 +151,10 @@ public class ID3Instance {
             }
         }
         return columnName;
+    }
+
+    public void setMinTableValues(int minTableValues) {
+        this.minTableValues = minTableValues;
     }
 
     public void setDataFrame(DataFrame dataFrame) {
