@@ -24,6 +24,7 @@ public class ID3Instance {
     public ID3Instance(DataFrame dataFrame) {
         this.dataFrame = dataFrame;
         this.roots = new ArrayList<>();
+        this.limitingDepth = false;
     }
 
     public ID3Instance(int limitDepth) {
@@ -70,7 +71,7 @@ public class ID3Instance {
     private Node recursiveID3(DataFrame df, String columnName, int limitNodes, int limitDepth) {
         if (columnName == null || df.getColumnNames().size() < 2 || (limitingDepth && limitDepth == 0) || df.size() <= minTableValues) {
             String nodeValue = "Yes";
-            if (df.percentage(0.0, "Survived") < 0.5)
+            if (df.percentage(0.0, "Survived") > 0.5)
                 nodeValue = "No";
             return new Node(nodeValue);
         }
@@ -160,7 +161,7 @@ public class ID3Instance {
     }
 
     public void setLimitDepth(int limitDepth) {
-        if(limitDepth > 0)
+        if(limitDepth >= 0)
             this.limitingDepth = true;
         this.limitDepth = limitDepth;
     }

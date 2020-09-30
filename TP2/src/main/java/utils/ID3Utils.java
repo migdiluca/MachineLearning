@@ -22,6 +22,11 @@ public class ID3Utils {
         dataFrame.map(item -> (double) item > fareMean ? 1.0 : 0.0, "Fare");
         double ageMean = (double) dataFrame.mean("Age");
         dataFrame.map(item -> (double) item > ageMean ? 1.0 : 0.0, "Age");
+//        double sibSpMean = (double) dataFrame.mean("SibSp");
+//        dataFrame.map(item -> (double) item > sibSpMean ? 1.0 : 0.0, "SibSp");
+//        double parchMean = (double) dataFrame.mean("Parch");
+//        dataFrame.map(item -> (double) item > parchMean ? 1.0 : 0.0, "Parch");
+
         return dataFrame;
     }
 

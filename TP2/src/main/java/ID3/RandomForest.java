@@ -6,7 +6,7 @@ import utils.ID3Utils;
 import java.io.IOException;
 
 public class RandomForest {
-    public static int[][] run(int trainingSize, int treesAmount, int nodeLimits, double testPercentage, int limitDepth, int minTableValues) throws IOException {
+    public static int[][] run(int treesAmount, int nodeLimits, double testPercentage, int limitDepth, int minTableValues) throws IOException {
         DataFrame dataFrame = ID3Utils.readAndProcessDataFrame();
         DataFrame test;
         if (testPercentage > 0)
@@ -21,7 +21,9 @@ public class RandomForest {
         instance.setMinTableValues(minTableValues);
 
         for (int i = 0; i < treesAmount; i++) {
-            DataFrame trainDf = dataFrame.getRandomValues(trainingSize);
+            DataFrame trainDf = dataFrame;
+            if(testPercentage > 0)
+                trainDf = dataFrame.getRandomValues();
             instance.setDataFrame(trainDf);
             instance.train();
         }

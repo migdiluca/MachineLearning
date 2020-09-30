@@ -183,10 +183,10 @@ public class DataFrame {
         return testDf;
     }
 
-    public DataFrame getRandomValues(int amount) {
+    public DataFrame getRandomValues() {
         DataFrame randomDataset = new DataFrame();
         List<Map<String, Object>> newRows = new ArrayList<>();
-        for(int i = 0; i < amount; i++) {
+        for(int i = 0; i < rows.size(); i++) {
             int randomNum = ThreadLocalRandom.current().nextInt(0, rows.size());
             newRows.add(rows.get(randomNum));
         }
