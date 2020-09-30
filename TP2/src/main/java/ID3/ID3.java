@@ -10,9 +10,13 @@ public class ID3 {
         DataFrame dataFrame = ID3Utils.readAndProcessDataFrame();
 
         ID3Instance instance = new ID3Instance(dataFrame);
-        instance.train(0);
+        instance.train();
 
-        DataFrame test = dataFrame.getShufflePercent(testPercentage);
+        DataFrame test;
+        if (testPercentage > 0)
+            test = dataFrame.getShufflePercent(testPercentage);
+        else
+            test = dataFrame;
 
         return ID3Utils.confussionMatrix(test, instance);
     }
@@ -20,11 +24,16 @@ public class ID3 {
     public static int[][] run(double testPercentage, int limitDepth, int minTableValues) throws IOException {
         DataFrame dataFrame = ID3Utils.readAndProcessDataFrame();
 
-        ID3Instance instance = new ID3Instance(dataFrame, limitDepth);
-        instance.train(0);
+        ID3Instance instance = new ID3Instance(dataFrame);
+        instance.setLimitDepth(limitDepth);
         instance.setMinTableValues(minTableValues);
+        instance.train();
 
-        DataFrame test = dataFrame.getShufflePercent(testPercentage);
+        DataFrame test;
+        if (testPercentage > 0)
+            test = dataFrame.getShufflePercent(testPercentage);
+        else
+            test = dataFrame;
 
         return ID3Utils.confussionMatrix(test, instance);
     }

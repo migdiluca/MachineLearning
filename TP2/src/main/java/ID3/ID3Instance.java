@@ -12,6 +12,7 @@ public class ID3Instance {
     private int limitDepth;
     private boolean limitingDepth;
 
+    private int limitNodes = 0;
     private int minTableValues = 0;
 
     public ID3Instance() {
@@ -38,7 +39,7 @@ public class ID3Instance {
         this.roots = new ArrayList<>();
     }
 
-    public void train(int limitNodes) throws IOException {
+    public void train() {
         double generalEntropy = ShannonEntropy.getGeneralEntropy(dataFrame.percentage(1.0, "Survived"), dataFrame.percentage(0.0, "Survived"));
         Map<String, Double> gain = new HashMap<>();
         List<String> columnNames = new ArrayList<>(dataFrame.getColumnNames());
@@ -156,6 +157,16 @@ public class ID3Instance {
 
     public void setDataFrame(DataFrame dataFrame) {
         this.dataFrame = dataFrame;
+    }
+
+    public void setLimitDepth(int limitDepth) {
+        if(limitDepth > 0)
+            this.limitingDepth = true;
+        this.limitDepth = limitDepth;
+    }
+
+    public void setLimitNodes(int limitNodes) {
+        this.limitNodes = limitNodes;
     }
 }
 
