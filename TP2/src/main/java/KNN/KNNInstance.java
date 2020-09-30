@@ -42,6 +42,8 @@ public class KNNInstance<T> {
     }
 
     private T categoryByClosest(List<Point> closest){
+        boolean repeatedMaxCategory = false;
+
         T maxCategory = null;
         long maxValue = 0;
         for(T category: categories){
@@ -50,8 +52,14 @@ public class KNNInstance<T> {
             if(newValue > maxValue){
                 maxValue = newValue;
                 maxCategory = category;
+                repeatedMaxCategory = false;
+            }else if(newValue == maxValue){
+                repeatedMaxCategory = true;
             }
         }
+
+        if(repeatedMaxCategory)
+            return null;
 
         return Optional.ofNullable(maxCategory).orElseThrow(IllegalArgumentException::new);
     }

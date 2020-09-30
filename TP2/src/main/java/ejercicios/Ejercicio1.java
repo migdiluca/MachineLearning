@@ -19,8 +19,6 @@ public class Ejercicio1 {
         Double sentimentValue;
         Integer starRating;
 
-        Double titleSentiment_sentimentValue;
-
         static Function<Double, Double> wordCountNormalizer,
                 titleSentimentNormalizer,
                 sentimentValueNormalizer,
@@ -31,7 +29,6 @@ public class Ejercicio1 {
             values.add(wordCountNormalizer.apply(wordCount));
             values.add(titleSentimentNormalizer.apply(titleSentiment));
             values.add(sentimentValueNormalizer.apply(sentimentValue));
-            values.add(titleSentiment_SentimentValueNormalizer.apply(titleSentiment_sentimentValue));
             return values;
         }
 
@@ -45,10 +42,6 @@ public class Ejercicio1 {
 
         public static void setSentimentValueNormalizer(Function<Double, Double> sentimentValueNormalizer) {
             Review.sentimentValueNormalizer = sentimentValueNormalizer;
-        }
-
-        public static void setTitleSentiment_SentimentValueNormalizer(Function<Double, Double> titleSentiment_SentimentValueNormalizer) {
-            Review.titleSentiment_SentimentValueNormalizer = titleSentiment_SentimentValueNormalizer;
         }
     }
 
@@ -81,7 +74,7 @@ public class Ejercicio1 {
                 newReview.titleSentiment = 1.0;
                 break;
             default:
-                newReview.titleSentiment = 0.0;
+                newReview.titleSentiment = null;
         }
 
         String textSentiment = row.get("textSentiment");
@@ -97,8 +90,6 @@ public class Ejercicio1 {
         newReview.starRating = Integer.valueOf(row.get("Star Rating"));
         newReview.sentimentValue = Double.valueOf(row.get("sentimentValue"));
 
-        newReview.titleSentiment_sentimentValue = newReview.titleSentiment * newReview.sentimentValue;
-
         return newReview;
     }
 
@@ -108,6 +99,8 @@ public class Ejercicio1 {
         for(Map<String, String> row : values){
             data.add(rowMapper(row));
         }
+
+        replaceTitleSentimentNanWithMean();
     }
 
     private static void a(){
@@ -157,16 +150,9 @@ public class Ejercicio1 {
         double minSentimentValue = division.train.stream()
                 .mapToDouble(v->v.sentimentValue).min().orElseThrow(IllegalArgumentException::new);
 
-        double maxTitleSentiment_SentimentValue = division.train.stream()
-                .mapToDouble(v->v.titleSentiment_sentimentValue).max().orElseThrow(IllegalArgumentException::new);
-        double minTitleSentiment_SentimentValue = division.train.stream()
-                .mapToDouble(v->v.titleSentiment_sentimentValue).min().orElseThrow(IllegalArgumentException::new);
-
         Review.setWordCountNormalizer(normalize(maxWordCount, minWordCount, 100.0));
         Review.setTitleSentimentNormalizer(normalize(maxTitleSentiment, minTitleSentiment, 100.0));
         Review.setSentimentValueNormalizer(normalize(maxSentimentValue, minSentimentValue, 100.0));
-        Review.setTitleSentiment_SentimentValueNormalizer(
-                normalize(maxTitleSentiment_SentimentValue, minTitleSentiment_SentimentValue, 0.0));
 
         for(Review review : division.train){
             List<Double> values = review.toList();
@@ -236,6 +222,18 @@ public class Ejercicio1 {
 
             System.out.printf("Precision for %s: %.2f\n", a, Double.compare(p, 0) == 0 ? '-' : (double) tp / p);
         }
+    }
+
+    private static void replaceTitleSentimentNanWithMean(){
+        double mean = data.stream()
+                .filter(review -> review.titleSentiment != null)
+                .mapToDouble(review -> review.titleSentiment)
+                .average()
+                .orElseThrow(IllegalArgumentException::new);
+
+        data.forEach(review -> {
+            review.titleSentiment = Optional.ofNullable(review.titleSentiment).orElse(mean);
+        });
     }
 
     private static Function<Double, Double> normalize(Double max, Double min, Double scale){
