@@ -56,4 +56,8 @@ public class PerceptronInstance {
         newValues.addAll(a.getValues());
         return new Vector(newValues);
     }
+
+    public Vector getWeights() {
+        return weights;
+    }
 }
