@@ -22,14 +22,14 @@ public class PerceptronInstance {
         this.learningRate = learningRate;
     }
 
-    public void train(Vector input, double expectedOutput){
+    public boolean train(Vector input, double expectedOutput){
         if(input.getDimension() != this.dimension)
             throw new IllegalArgumentException("Input vector must be of the same dimension");
 
         double classifiedValue = classify(input);
 
         if(Double.compare(classifiedValue, expectedOutput) == 0)
-            return;
+            return false;
 
         Vector inputWithBias = addBias(input);
 
@@ -41,6 +41,8 @@ public class PerceptronInstance {
         }
 
         this.weights = new Vector(newValues);
+
+        return true;
     }
 
     public double classify(Vector input){

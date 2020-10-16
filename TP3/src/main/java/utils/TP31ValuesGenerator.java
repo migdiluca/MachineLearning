@@ -27,7 +27,7 @@ public class TP31ValuesGenerator {
     }
 
     private static void generateValue(BufferedWriter bw, int classNumber) throws IOException {
-        double x = Math.random() * 5;
+        double x = Math.random() * (5 - MARGIN) + MARGIN;
         double y;
         if(classNumber == 1){
             y = (5 - x - MARGIN) * Math.random() + x + MARGIN;

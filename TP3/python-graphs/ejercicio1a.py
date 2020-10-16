@@ -25,9 +25,10 @@ def run():
     for x, y, c in [point.split(',') for point in points[1::]]:
         plt.scatter(float(x), float(y), marker=markers[c], color=colors[c])
 
-    x = np.arange(0, 5, 0.01)
-    c, a, b = [float(val) for val in weights[0].split(',')]
-    plt.plot(np.arange(0, 5, 0.01), [- i * (a / b) - (c / b) for i in x])
+    x = np.arange(-0.5, 5.5, 0.01)
+    a, b, c = [float(val) for val in weights[0].split(',')]
+    print(a, b, c)
+    plt.plot(x, [i * (-b / c) - (a / c) for i in x])
 
     plt.show()
 

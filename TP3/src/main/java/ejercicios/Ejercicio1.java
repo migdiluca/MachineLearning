@@ -34,14 +34,16 @@ public class Ejercicio1 {
                 .create();
 
         //Train
-        for(int i=0; i<100000; i++){
+        boolean error = true;
+        while(error){
+            error = false;
             for(Map<String, String> line : TP31_values){
                 Vector input = new Vector(Arrays.asList(
                         Double.valueOf(line.get("x")),
                         Double.valueOf(line.get("y"))
                 ));
 
-                perceptronInstance.train(input, Double.parseDouble(line.get("c")));
+                error |= perceptronInstance.train(input, Double.parseDouble(line.get("c")));
             }
         }
 

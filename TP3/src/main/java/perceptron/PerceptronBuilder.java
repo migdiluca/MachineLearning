@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 public class PerceptronBuilder {
 
     public static Function<Double, Double> STEP_ACTIVATION_FUNCTION =
-            (Double a) -> Double.compare(a, 0.5) > 0 ? 1.0 : -1.0;
+            (Double a) -> a > 0 ? 1.0 : -1.0;
 
     public static Supplier<Double> RANDOM_WEIGHT_SUPPLIER = Math::random;
 
