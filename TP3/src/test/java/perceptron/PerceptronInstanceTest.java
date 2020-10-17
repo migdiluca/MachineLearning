@@ -3,7 +3,7 @@ package perceptron;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import utils.Vector;
+import utils.math.Vector;
 
 import java.util.Arrays;
 import java.util.HashMap;

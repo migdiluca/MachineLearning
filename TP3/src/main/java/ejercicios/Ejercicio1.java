@@ -1,10 +1,11 @@
 package ejercicios;
 
+import perceptron.OptimalHyperplane;
 import perceptron.PerceptronBuilder;
 import perceptron.PerceptronInstance;
 import utils.CsvReader;
 import utils.TP31ValuesGenerator;
-import utils.Vector;
+import utils.math.Vector;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -23,10 +24,12 @@ public class Ejercicio1 {
 
         TP31_values = CsvReader.readCsv(TP31_PATH, ",");
 
-        a();
+        Vector weights = a();
+
+        b(weights);
     }
 
-    public static void a() throws IOException {
+    public static Vector a() throws IOException {
         PerceptronInstance perceptronInstance = (new PerceptronBuilder())
                 .setBias(1)
                 .setDimension(2)
@@ -48,9 +51,22 @@ public class Ejercicio1 {
         }
 
         //Print weights
-        try(BufferedWriter bw = new BufferedWriter(new FileWriter("./data/ej1a.csv"))){
+        printWeights(perceptronInstance.getWeights(), "./data/ej1a.csv");
+
+        return perceptronInstance.getWeights();
+    }
+
+    public static void b(Vector weights) throws IOException {
+        Vector optimalWeights = OptimalHyperplane.findOptimalHyperplane(weights, TP31_values, 20);
+
+        printWeights(optimalWeights, "./data/ej1b.csv");
+    }
+
+    private static void printWeights(Vector weights, String path) throws IOException {
+        //Print weights
+        try(BufferedWriter bw = new BufferedWriter(new FileWriter(path))){
             String separator = "";
-            for(Double weight : perceptronInstance.getWeights().getValues()){
+            for(Double weight : weights.getValues()){
                 bw.write(separator);
                 bw.write(weight.toString());
 

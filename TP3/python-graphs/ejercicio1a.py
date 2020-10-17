@@ -8,9 +8,9 @@ def read_csv(path):
     return [x.strip() for x in content]
 
 
-def run():
+def run(line_path):
     points = read_csv('../data/TP3-1.csv')
-    weights = read_csv('../data/ej1a.csv')
+    weights = read_csv(line_path)
 
     markers = {
         '1': 'o',
@@ -28,9 +28,11 @@ def run():
     x = np.arange(-0.5, 5.5, 0.01)
     a, b, c = [float(val) for val in weights[0].split(',')]
     print(a, b, c)
-    plt.plot(x, [i * (-b / c) - (a / c) for i in x])
-
+    plt.axis('scaled')
+    plt.plot(x, [i * (-a / b) - (c / b) for i in x])
     plt.show()
 
 
-run()
+run('../data/ej1a.csv')
+run('../data/ej1b.csv')
+

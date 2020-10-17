@@ -1,6 +1,6 @@
 package perceptron;
 
-import utils.Vector;
+import utils.math.Vector;
 
 import java.util.ArrayList;
 import java.util.List;

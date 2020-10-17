@@ -1,4 +1,4 @@
-package utils;
+package utils.math;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +54,22 @@ public class Vector {
             throw new IllegalArgumentException(
                     String.format("Vectors should be of the same dimension. Found %s and %s.", a.dimension, b.dimension)
             );
+    }
+
+    public static Vector vectorFromIndexes(Vector vector, List<Integer> indexes){
+        List<Double> values = new ArrayList<>(indexes.size());
+        for(Integer index: indexes){
+            values.add(vector.getValues().get(index));
+        }
+        return new Vector(values);
+    }
+
+    public Vector normalize(){
+        return normalize(this);
+    }
+
+    public static Vector normalize(Vector a){
+        return Vector.scalarMultiplication(a, a.norm());
     }
 
     public static Vector subtract(Vector a, Vector b){

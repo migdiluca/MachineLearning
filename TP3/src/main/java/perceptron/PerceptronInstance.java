@@ -1,6 +1,6 @@
 package perceptron;
 
-import utils.Vector;
+import utils.math.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,9 +53,8 @@ public class PerceptronInstance {
     }
 
     private Vector addBias(Vector a){
-        List<Double> newValues = new ArrayList<>();
+        List<Double> newValues = new ArrayList<>(a.getValues());
         newValues.add(bias);
-        newValues.addAll(a.getValues());
         return new Vector(newValues);
     }
 
