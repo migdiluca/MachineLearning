@@ -8,8 +8,8 @@ def read_csv(path):
     return [x.strip() for x in content]
 
 
-def run(line_path):
-    points = read_csv('../data/TP3-1.csv')
+def run(line_path, points_path):
+    points = read_csv(points_path)
     weights = read_csv(line_path)
 
     markers = {
@@ -33,6 +33,7 @@ def run(line_path):
     plt.show()
 
 
-run('../data/ej1a.csv')
-run('../data/ej1b.csv')
+run('../data/ej1a.csv', '../data/TP3-1.csv')
+run('../data/ej1b.csv', '../data/TP3-1.csv')
 
+run('../data/ej1b.csv', '../data/TP3-2.csv')

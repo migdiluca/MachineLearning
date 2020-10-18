@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class TP31ValuesGenerator {
 
-    private static double MARGIN = 0.5;
+    public static double MARGIN = 0.5;
 
     public static void generate(int numberOfValues, String filePath) throws IOException{
         int aClassNumber = numberOfValues / 2;
