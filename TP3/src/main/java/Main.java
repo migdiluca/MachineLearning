@@ -5,7 +5,7 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-//        TP32ValuesGenerator.generate(100, 20, "./data/TP3-2.csv");
+//        TP32ValuesGenerator.generate(20, "./data/TP3-2.csv");
         //        TP31ValuesGenerator.generate(100, TP31_PATH);
 
         Ejercicio1.run();

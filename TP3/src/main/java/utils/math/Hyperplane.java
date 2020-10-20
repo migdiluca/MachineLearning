@@ -100,4 +100,8 @@ public class Hyperplane {
                 + plane.coefficients.getValues().get(plane.coefficients.getDimension() - 1)
         ) / slope.norm();
     }
+
+    public Hyperplane normalize(){
+        return new Hyperplane(normalizeNormal(coefficients));
+    }
 }

@@ -30,13 +30,13 @@ public class OptimalHyperplane {
         List<Point> categoryA = points.stream()
                 .filter(v -> v.getCategory() == 1)
                 .sorted(comparator)
-//                .limit(kClosesNeighbors)
+                .limit(kClosesNeighbors)
                 .collect(Collectors.toList());
 
         List<Point> categoryB = points.stream()
                 .filter(v -> v.getCategory() == -1)
                 .sorted(comparator)
-//                .limit(kClosesNeighbors)
+                .limit(kClosesNeighbors)
                 .collect(Collectors.toList());
 
         return pickNeighborCombination(categoryA, categoryB, points);
@@ -52,7 +52,7 @@ public class OptimalHyperplane {
                 for(Point c : categoryA){
                     if(c == a)
                         continue;
-                    LineMarginResult newVal = findLineMargin(a, b, c, maxMargin, points);
+                    LineMarginResult newVal = findLineMargin(a, b, c, maxMargin, points, categoryA, categoryB);
                     if(newVal.margin > maxMargin){
                         maxMarginCombination = newVal;
                         maxMargin = newVal.margin;
@@ -61,7 +61,7 @@ public class OptimalHyperplane {
                 for(Point c : categoryB){
                     if(c == b)
                         continue;
-                    LineMarginResult newVal = findLineMargin(a, b, c, maxMargin, points);
+                    LineMarginResult newVal = findLineMargin(a, b, c, maxMargin, points, categoryA, categoryB);
                     if(newVal.margin > maxMargin){
                         maxMarginCombination = newVal;
                         maxMargin = newVal.margin;
@@ -82,7 +82,8 @@ public class OptimalHyperplane {
             this.margin = margin;
         }
     }
-    private static LineMarginResult findLineMargin(Point a, Point b, Point c, double currentMargin, List<Point> points){
+    private static LineMarginResult findLineMargin(Point a, Point b, Point c, double currentMargin, List<Point> points,
+                                                   List<Point> categoryA, List<Point> categoryB){
         Point grouped, alone;
         if(a.getCategory() == c.getCategory()){
             grouped = a;
@@ -94,23 +95,45 @@ public class OptimalHyperplane {
 
         SeparationHyperplane h1 = new SeparationHyperplane(Hyperplane.ofLine(grouped.getVector(), c.getVector()), alone);
 
-        double distance = h1.getHyperplane().pointDistance(alone.getVector());
+        SeparationHyperplane moved = new SeparationHyperplane(
+                h1.getHyperplane().move(h1.getHyperplane().pointDistance(alone.getVector()) / 2).normalize()
+        );
 
-        if(Math.abs(distance) < currentMargin)
-            return new LineMarginResult(null, Double.NEGATIVE_INFINITY);
+        Point closestA = closestDistance(categoryA, moved.getHyperplane()),
+                closestB = closestDistance(categoryB, moved.getHyperplane());
 
-        SeparationHyperplane movedHyperplane = new SeparationHyperplane(h1.getHyperplane().move(distance / 2));
+        Hyperplane aux = moved.getHyperplane()
+                .move(
+                        moved.getHyperplane().pointDistance(closestA.getVector())
+                )
+                .normalize();
 
-        SeparationHyperplane h2 = new SeparationHyperplane(h1.getHyperplane().move(distance));
+        aux = aux.move(
+                aux.pointDistance(closestB.getVector()) / 2
+        ).normalize();
 
-        boolean result = verifyHyperplane(h1, points)
-                && verifyHyperplane(h2, points);
+        SeparationHyperplane movedHyperplane = new SeparationHyperplane(aux);
+
+        boolean result = verifyHyperplane(movedHyperplane, points);
+
+        double margin = Math.abs(aux.pointDistance(closestA.getVector()))
+                + Math.abs(aux.pointDistance(closestB.getVector()));
 
         if(result){
-            return new LineMarginResult(movedHyperplane.getHyperplane().getCoefficients(), Math.abs(distance));
+            return new LineMarginResult(movedHyperplane.getHyperplane().getCoefficients(), margin);
         }else{
             return new LineMarginResult(null, Double.NEGATIVE_INFINITY);
         }
+    }
+
+    private static Point closestDistance(List<Point> points, Hyperplane hyperplane){
+        Comparator<Point> comparator = Comparator.comparingDouble(
+                (Point a) -> Hyperplane.pointDistance(hyperplane, a.getVector())
+        ).reversed();
+
+        return points.stream()
+                .min(comparator)
+                .orElseThrow(()->new IllegalArgumentException("Could not found a min!"));
     }
 
     protected static boolean verifyHyperplane(SeparationHyperplane hyperplane, List<Point> points){

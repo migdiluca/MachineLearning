@@ -6,8 +6,7 @@ import java.io.IOException;
 
 public class TP32ValuesGenerator {
 
-    public static void generate(int numberOfValues, int wrongValues, String filePath) throws IOException {
-        TP31ValuesGenerator.generate(numberOfValues, filePath);
+    public static void generate(int wrongValues, String filePath) throws IOException {
 
         try(BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, true))) {
             for(int i=0; i<wrongValues; i++){
@@ -25,6 +24,6 @@ public class TP32ValuesGenerator {
         y = Math.max(y, 0);
         y = Math.min(y, 5);
 
-        bw.write(String.format("%s,%s,%s\n", x, y, y > x ? -1 : 1));
+        bw.write(String.format("%s,%s,%s\n", x, y, Math.random() > 0.5 ? -1 : 1));
     }
 }
