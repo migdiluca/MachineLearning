@@ -1,3 +1,4 @@
+import colorsys
 from typing import Tuple, List
 
 from PIL import Image
@@ -5,6 +6,7 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 
+dictionary = {'sky': {"index": 0, "color": (0,0,255)}, 'grass': {"index": 1, "color": (0,255,0)}, 'cow': {"index": 2, "color": (255,0,0)}}
 
 class Point:
     def __init__(self, position: Tuple[int, int], color: Tuple[int, int, int], category: str):
@@ -38,6 +40,7 @@ def category_to_color(category: str, color: Tuple[int, int, int]) -> Tuple[int, 
 
 def run(clf):
     full_image = Image.open('../data/images/cow.jpg')
+    full = image_to_points(full_image, 'full')
     cow = image_to_points(Image.open('../data/images/vaca.jpg'), 'cow')
     sky = image_to_points(Image.open('../data/images/cielo.jpg'), 'sky')
     grass = image_to_points(Image.open('../data/images/pasto.jpg'), 'grass')
@@ -63,10 +66,22 @@ def run(clf):
     prediction = clf.predict(colors_test)
 
     errors = 0
+    confusion_matrix = [[0 for col in range(3)] for row in range(3)]
     for expected, predicted in zip(categories_test, prediction):
         errors += 1 if expected != predicted else 0
+        confusion_matrix[dictionary[expected]['index']][dictionary[predicted]['index']] += 1
 
+    print(confusion_matrix)
     print('%s errores de %s predicciones (%.2f)' % (errors, len(prediction), float(errors)/len(prediction)))
 
+    prediction_full = clf.predict([point.color for point in full])
+
+    i = 0
+    for predicted in prediction_full:
+        full_image.putpixel(full[i].position, dictionary[predicted].color)
+        i += 1
+
+    plt.imshow(full_image)
+    plt.show()
 
 run(svm.SVC())
