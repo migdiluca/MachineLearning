@@ -1,5 +1,6 @@
 package src.utils.math;
 
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -126,6 +127,27 @@ public class Vector {
             result += a.values.get(i) * b.values.get(i);
         }
         return result;
+    }
+
+    public static Vector centroid(List<Vector> vectors){
+        if(vectors.isEmpty())
+            throw new IllegalArgumentException("Vector list cannot be empty");
+
+        List<Double> values = new ArrayList<>(vectors.get(0).dimension);
+
+        for(int i=0; i < vectors.get(0).dimension; i++){
+            values.add(0.0);
+        }
+
+        for(Vector v : vectors){
+            List<Double> vValues = v.getValues();
+
+            for(int i=0; i<vValues.size(); i++){
+                values.set(i, values.get(i) + vValues.get(i));
+            }
+        }
+
+        return Vector.scalarMultiplication(new Vector(values), vectors.get(0).dimension);
     }
 
     @Override
