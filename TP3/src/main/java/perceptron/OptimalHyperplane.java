@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 public class OptimalHyperplane {
 
 
-    public static Vector findOptimalHyperplane(Vector weights, List<Map<String, String>> values, int kClosesNeighbors){
+    public static SeparationHyperplane findOptimalHyperplane(Vector weights, List<Map<String, String>> values, int kClosesNeighbors){
         Hyperplane suboptimalHyperplane = new Hyperplane(weights);
 
         List<Point> points = values.stream()
@@ -44,7 +44,7 @@ public class OptimalHyperplane {
     }
 
 
-    private static Vector pickNeighborCombination(List<Point> categoryA, List<Point> categoryB, List<Point> points){
+    private static SeparationHyperplane pickNeighborCombination(List<Point> categoryA, List<Point> categoryB, List<Point> points){
         LineMarginResult maxMarginCombination = null;
         double maxMargin = Double.NEGATIVE_INFINITY;
         for(Point a : categoryA){
@@ -70,15 +70,15 @@ public class OptimalHyperplane {
             }
         }
 
-        return Optional.ofNullable(maxMarginCombination).map(v -> v.weights).orElse(null);
+        return Optional.ofNullable(maxMarginCombination).map(v -> v.separationHyperplane).orElse(null);
     }
 
     static class LineMarginResult {
-        Vector weights;
+        SeparationHyperplane separationHyperplane;
         double margin;
 
-        public LineMarginResult(Vector weights, double margin) {
-            this.weights = weights;
+        public LineMarginResult(SeparationHyperplane separationHyperplane, double margin) {
+            this.separationHyperplane = separationHyperplane;
             this.margin = margin;
         }
     }
@@ -96,7 +96,7 @@ public class OptimalHyperplane {
         SeparationHyperplane h1 = new SeparationHyperplane(Hyperplane.ofLine(grouped.getVector(), c.getVector()), alone);
 
         SeparationHyperplane moved = new SeparationHyperplane(
-                h1.getHyperplane().move(h1.getHyperplane().pointDistance(alone.getVector()) / 2).normalize()
+                h1.getHyperplane().move(h1.getHyperplane().pointDistance(alone.getVector()) / 2)
         );
 
         Point closestA = closestDistance(categoryA, moved.getHyperplane()),
@@ -105,12 +105,11 @@ public class OptimalHyperplane {
         Hyperplane aux = moved.getHyperplane()
                 .move(
                         moved.getHyperplane().pointDistance(closestA.getVector())
-                )
-                .normalize();
+                );
 
         aux = aux.move(
                 aux.pointDistance(closestB.getVector()) / 2
-        ).normalize();
+        );
 
         SeparationHyperplane movedHyperplane = new SeparationHyperplane(aux);
 
@@ -120,7 +119,7 @@ public class OptimalHyperplane {
                 + Math.abs(aux.pointDistance(closestB.getVector()));
 
         if(result){
-            return new LineMarginResult(movedHyperplane.getHyperplane().getCoefficients(), margin);
+            return new LineMarginResult(movedHyperplane, margin);
         }else{
             return new LineMarginResult(null, Double.NEGATIVE_INFINITY);
         }
