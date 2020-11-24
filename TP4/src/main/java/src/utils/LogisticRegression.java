@@ -1,6 +1,10 @@
 package src.utils;
 
+import src.utils.math.Vector;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class LogisticRegression {
     private boolean trained;
@@ -11,10 +15,10 @@ public class LogisticRegression {
     }
 
     public void train(double[][] X, double[] Y, double n){
-        System.out.println(Arrays.toString(Y));
-        System.out.println(X.length);
         thetas = maximumLikelihoodGradientAscent(X, Y, n);
         trained = true;
+
+        System.out.println(Arrays.toString(thetas));
     }
 
     public double predict(double[] X){
@@ -23,7 +27,7 @@ public class LogisticRegression {
         return predict(X, thetas);
     }
 
-    private static double predict(double[] X, double[] thetas){
+    public static double predict(double[] X, double[] thetas){
         double z = dotProduct(thetas, X);
 
         return sigmoid(z);
@@ -41,10 +45,13 @@ public class LogisticRegression {
         double[] theta = new double[m];
         Arrays.fill(theta, 0);
 
-        int errors = 1000;
-        while(errors > 500){
-            errors = 0;
-            double[] gradient = new double[m];
+        double gradientNorm;
+        double[] gradient;
+        int steps = 10000 * 2;
+        double[] prevThetas;
+        do{
+            prevThetas = theta;
+            gradient = new double[m];
             Arrays.fill(gradient, 0);
 
             for (int i = 0; i<X.length; i++){
@@ -52,21 +59,43 @@ public class LogisticRegression {
 
                 double aux = Y[i] - predict(sample, theta);
 
-                errors += Double.compare(aux, 0.0) == 0 ? 0 : 1;
-
                 for(int j = 0; j < sample.length; j++){
                     gradient[j] += sample[j] * aux;
                 }
             }
 
             theta = elementSum(theta, scalarProduct(n, gradient));
-        }
+            steps--;
+
+            gradientNorm = (new Vector(Arrays.stream(gradient).boxed().collect(Collectors.toList()))).norm();
+
+            System.out.println(gradientNorm);
+        }while(gradientNorm > 15);
 
         return theta;
     }
 
     public static double sigmoid(double x){
-        return 1.0 / (1 + Math.exp(-x));
+        if(x < 0){
+            double exp = Math.exp(x);
+            return exp / (1 + exp);
+        }else{
+            return 1.0 / (1 + Math.exp(-x));
+        }
+    }
+
+    private static boolean compareThetas(double[] t1, double[] t2){
+        if(t1 == null || t2 == null)
+            return false;
+        if(t1.length != t2.length)
+            return false;
+
+        Vector v1 = new Vector(Arrays.stream(t1).boxed().collect(Collectors.toList())),
+                v2 = new Vector(Arrays.stream(t2).boxed().collect(Collectors.toList()));
+
+        double distance = v1.distance(v2);
+        System.out.println(distance);
+        return distance < v1.norm();
     }
 
     private static double dotProduct(double[] v1, double[] v2){

@@ -22,8 +22,11 @@ public class CsvReader {
                 Map<String, String> newValues = new HashMap<>();
                 String[] lineValues = line.split(separator);
 
-                for(int i = 0; i < lineValues.length; i++){
-                    newValues.put(headers[i], lineValues[i]);
+                for(int i = 0; i < headers.length; i++){
+                    if(i < lineValues.length)
+                        newValues.put(headers[i], lineValues[i]);
+                    else
+                        newValues.put(headers[i], null);
                 }
                 values.add(newValues);
             }
