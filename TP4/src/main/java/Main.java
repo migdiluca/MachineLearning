@@ -6,6 +6,7 @@ import src.utils.math.Vector;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Main {
@@ -21,7 +22,7 @@ public class Main {
             Y[i] = Double.parseDouble(data.get(i).get("sigdz"));
 
             valuesWithNull[i] = new Double[]{
-                    toDoubleOrNull(data.get(i).get("sex")),
+//                    toDoubleOrNull(data.get(i).get("sex")),
                     toDoubleOrNull(data.get(i).get("age")),
                     toDoubleOrNull(data.get(i).get("cad.dur")),
                     toDoubleOrNull(data.get(i).get("choleste"))
@@ -29,41 +30,27 @@ public class Main {
 
         }
 
-        Double[][] X = valuesWithNullToMean(valuesWithNull);
+        double[][] XMean = valuesWithNullToMean(valuesWithNull);
+//        double[][] XRemove = removeNullValues(valuesWithNull);
 
-        PerceptronInstance perceptronInstance = (new PerceptronBuilder())
+        PerceptronInstance p1 = new PerceptronBuilder()
                 .setActivationFunction(PerceptronBuilder.SIGMOID_ACTIVATION_FUNCTION)
+                .setLearningRate(0.00001)
                 .setBias(1)
-                .setLearningRate(0.01)
-                .setDimension(X[0].length)
+                .setDimension(XMean[0].length)
                 .create();
 
-        int steps = 10000;
-        int maxErrors = 500;
-        int errors = maxErrors + 1;
-        while(steps != 0 && errors > maxErrors){
-            errors = 0;
-            for(int i=0; i<X.length; i++){
-                src.utils.math.Vector sample = new src.utils.math.Vector(Arrays.asList(X[i]));
+        train(p1, XMean, Y);
+    }
 
-                errors += perceptronInstance.train(sample, Y[i]) ? 1 : 0;
+    private static void train(PerceptronInstance p, double[][] X, double[] Y){
+        int times = 1000;
+        for(int t = 0; t < times; t++){
+            for(int i=0; i< X.length; i++){
+                double[] sample = X[i];
+                p.train(new Vector(Arrays.stream(sample).boxed().collect(Collectors.toList())), Y[i]);
             }
-            steps--;
         }
-
-        for(int i=0; i<X.length; i++){
-            src.utils.math.Vector sample = new src.utils.math.Vector(Arrays.asList(X[i]));
-
-            double result = perceptronInstance.classify(sample);
-
-//            System.out.printf("%s -- %s\n", result, Y[i]);
-        }
-
-        double res = 0;
-        res += perceptronInstance.classify(new Vector(Arrays.asList(1.0, 60.0, 2.0, 199.0)));
-        res += perceptronInstance.classify(new Vector(Arrays.asList(0.0, 60.0, 2.0, 199.0)));
-
-        System.out.println(res);
     }
 
     private static Double toDoubleOrNull(String value){
@@ -73,8 +60,8 @@ public class Main {
                 .orElse(null);
     }
 
-    private static Double[][] valuesWithNullToMean(Double[][] values){
-        Double[][] result = new Double[values.length][values[0].length];
+    private static double[][] valuesWithNullToMean(Double[][] values){
+        double[][] result = new double[values.length][values[0].length];
 
         for(int j=0; j < values[0].length; j++){
             int count = 0;
@@ -95,5 +82,18 @@ public class Main {
         }
 
         return result;
+    }
+
+    private static double[][] removeNullValues(Double[][] values){
+        List<double[]> newArray = new ArrayList<>();
+
+        for(Double[] sample : values){
+            boolean hasNull = Arrays.stream(sample).anyMatch(Objects::isNull);
+
+            if(!hasNull)
+                newArray.add(Arrays.stream(sample).mapToDouble(Double::doubleValue).toArray());
+        }
+
+        return newArray.toArray(new double[0][0]);
     }
 }

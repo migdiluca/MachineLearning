@@ -87,6 +87,11 @@ public class PerceptronBuilder {
     }
 
     public static double sigmoid(double x){
-        return 1.0 / (1 + Math.exp(-x));
+        if(x < 0){
+            double exp = Math.exp(x);
+            return exp / (1 + exp);
+        }else{
+            return 1.0 / (1 + Math.exp(-x));
+        }
     }
 }
