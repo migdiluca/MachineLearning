@@ -3,6 +3,7 @@ package src.kohonen;
 import src.kohonen.Vector;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public class KohonenMap {
 
@@ -47,6 +48,16 @@ public class KohonenMap {
 
         public KohonenMap create(){
             return new KohonenMap(lattice, timeConstant, neighborhoodFunction, learningRateFunction);
+        }
+
+        public static double neighborhoodFunction(int time, double timeConstant){
+            double r0 = 3;
+            return r0*Math.exp(-time/timeConstant);
+        }
+
+        public static double learningRateFunction(int time, double timeConstant){
+            double a0 = 1;
+            return a0*Math.exp(-time/timeConstant);
         }
     }
 

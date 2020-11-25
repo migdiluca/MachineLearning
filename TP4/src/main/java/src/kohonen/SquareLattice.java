@@ -143,4 +143,14 @@ public class SquareLattice implements Lattice {
     private double euclideanDistance(int i, int j, int k, int w){
         return Math.sqrt(Math.pow(i-k, 2) + Math.pow(j-w, 2));
     }
+
+    public static Supplier<Cell> cellGenerator(int dim){
+        return () -> {
+            double[] values = new double[dim];
+            for(int i=0; i<dim; i++){
+                values[i] = Math.random();
+            }
+            return new CellImpl(new Vector(values));
+        };
+    }
 }
