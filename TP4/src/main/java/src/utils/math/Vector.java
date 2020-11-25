@@ -14,6 +14,14 @@ public class Vector {
         this.dimension = values.size();
     }
 
+    public Vector(double [] values){
+        this.values = new ArrayList<>();
+        for(int i = 0; i < values.length; i++) {
+            this.values.add(values[i]);
+        }
+        this.dimension = values.length;
+    }
+
     public int getDimension() {
         return dimension;
     }
@@ -148,6 +156,11 @@ public class Vector {
         }
 
         return Vector.scalarMultiplication(new Vector(values), vectors.get(0).dimension);
+    }
+
+    @Override
+    public String toString() {
+        return this.values.toString();
     }
 
     @Override

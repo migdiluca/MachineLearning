@@ -1,50 +1,125 @@
+import src.hierarchicalClustering.HierarchicalClusteringInstance;
 import src.perceptron.PerceptronBuilder;
 import src.perceptron.PerceptronInstance;
 import src.utils.CsvReader;
 import src.utils.LogisticRegression;
 import src.utils.math.Vector;
+import src.utils.math.VectorWithBool;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Main {
 
     public static void main(String[] args) throws IOException {
+        System.out.println(Arrays.deepToString(hierarchicalClusteringConfusionMatrix(1)));
+//
+//        List<Map<String, String>> data = CsvReader.readCsv("./acath.csv", ",");
+//
+//        Double[][] valuesWithNull = new Double[data.size()][];
+//        double[] Y = new double[data.size()];
+//
+//        for (int i=0 ; i<data.size(); i++){
+//            Y[i] = Double.parseDouble(data.get(i).get("sigdz"));
+//
+//            valuesWithNull[i] = new Double[]{
+//                    //toDoubleOrNull(data.get(i).get("sex")),
+//                    toDoubleOrNull(data.get(i).get("age")),
+//                    toDoubleOrNull(data.get(i).get("cad.dur")),
+//                    toDoubleOrNull(data.get(i).get("choleste"))
+//            };
+//
+//        }
+//
+//        double[][] XMean = valuesWithNullToMean(valuesWithNull);
+////        double[][] XRemove = removeNullValues(valuesWithNull);
+//
+//        SetDivision sd = testAndTrainDivision(XMean, Y, 0.8);
+//
+//        PerceptronInstance p1 = new PerceptronBuilder()
+//                .setActivationFunction(PerceptronBuilder.SIGMOID_ACTIVATION_FUNCTION)
+//                .setLearningRate(0.00000001)
+//                .setBias(1)
+//                .setDimension(sd.train[0].length)
+//                .create();
+//
+//        train(p1, sd.train, sd.Ytrain);
+//
+//        System.out.println(p1.getWeights().toString());
+//        int [][] confusionMatrix = new int[2][2];
+//        for(int i = 0; i < sd.test.length; i++) {
+//            double predictedProbability = p1.classify(new Vector(sd.test[i]));
+//            int expected = (int)sd.Ytest[i];
+//            int predicted = (int)Math.round(predictedProbability);
+//            confusionMatrix[expected][predicted] += 1;
+//        }
+//
+//        System.out.println(Arrays.deepToString(confusionMatrix));
+//        double prob0 = p1.classify(new Vector(new double []{0.0, 60.0, 2.0, 199.0}));
+//        double prob1 = p1.classify(new Vector(new double []{1.0, 60.0, 2.0, 199.0}));
+//
+//
+//        double probSex0 = fieldProbability(XMean, 0, 0);
+//        double probSex1 = fieldProbability(XMean, 0, 1);
+//
+//        System.out.println((probSex0 * prob0) + (prob1 * probSex1));
+    }
 
-        List<Map<String, String>> data = CsvReader.readCsv("./acath.csv", ",");
+    private static class SetDivision {
+        public double[][] train;
+        public double[][] test;
 
-        Double[][] valuesWithNull = new Double[data.size()][];
-        double[] Y = new double[data.size()];
+        public double[] Ytrain;
+        public double[] Ytest;
 
-        for (int i=0 ; i<data.size(); i++){
-            Y[i] = Double.parseDouble(data.get(i).get("sigdz"));
+        public SetDivision(double[][] train, double[][] test, double[] ytrain, double[] ytest) {
+            this.train = train;
+            this.test = test;
+            Ytrain = ytrain;
+            Ytest = ytest;
+        }
+    }
 
-            valuesWithNull[i] = new Double[]{
-//                    toDoubleOrNull(data.get(i).get("sex")),
-                    toDoubleOrNull(data.get(i).get("age")),
-                    toDoubleOrNull(data.get(i).get("cad.dur")),
-                    toDoubleOrNull(data.get(i).get("choleste"))
-            };
+    private static SetDivision testAndTrainDivision(double [][] X, double []Y, double percentage) {
+        List<Integer> indexes = IntStream.range(0, X.length).boxed().collect(Collectors.toList());
+        Collections.shuffle(indexes);
+        int trainSize = (int) (indexes.size() * percentage);
+        int testSize = X.length - trainSize;
+        double [][] Xtrain = new double[trainSize][X[0].length];
+        double [][] Xtest = new double[testSize][X[0].length];
+        double [] Ytrain = new double[trainSize];
+        double [] Ytest = new double[testSize];
 
+        for(int i = 0; i < indexes.size(); i++) {
+            int index = indexes.get(i);
+            if(i < trainSize) {
+                Xtrain[i] = X[index];
+                Ytrain[i] = Y[index];
+            } else {
+                Xtest[i - trainSize] = X[index];
+                Ytest[i - trainSize] = Y[index];
+            }
         }
 
-        double[][] XMean = valuesWithNullToMean(valuesWithNull);
-//        double[][] XRemove = removeNullValues(valuesWithNull);
+        return new SetDivision(Xtrain, Xtest, Ytrain, Ytest);
+    }
 
-        PerceptronInstance p1 = new PerceptronBuilder()
-                .setActivationFunction(PerceptronBuilder.SIGMOID_ACTIVATION_FUNCTION)
-                .setLearningRate(0.00001)
-                .setBias(1)
-                .setDimension(XMean[0].length)
-                .create();
-
-        train(p1, XMean, Y);
+    private static double fieldProbability(double [][] X, int index, double value) {
+        int amount = 0;
+        for(int i = 0; i < X.length; i++) {
+            if(Double.compare(value, X[i][index]) == 0) {
+                amount++;
+            }
+        }
+        return amount/(double)X.length;
     }
 
     private static void train(PerceptronInstance p, double[][] X, double[] Y){
-        int times = 1000;
+        int times = 10000;
         for(int t = 0; t < times; t++){
             for(int i=0; i< X.length; i++){
                 double[] sample = X[i];
@@ -95,5 +170,71 @@ public class Main {
         }
 
         return newArray.toArray(new double[0][0]);
+    }
+
+    private static int[][] hierarchicalClusteringConfusionMatrix(double percentage) throws IOException {
+        List<Map<String, String>> data = CsvReader.readCsv("./acath.csv", ",");
+
+        Double[][] valuesWithNull = new Double[data.size()][];
+
+        for (int i=0 ; i<data.size(); i++){
+            valuesWithNull[i] = new Double[]{
+                    toDoubleOrNull(data.get(i).get("sex")),
+                    toDoubleOrNull(data.get(i).get("age")),
+                    toDoubleOrNull(data.get(i).get("cad.dur")),
+                    toDoubleOrNull(data.get(i).get("choleste")),
+                    toDoubleOrNull(data.get(i).get("sigdz"))
+            };
+
+        }
+
+        double[][] XMean = valuesWithNullToMean(valuesWithNull);
+        shuffleArray(XMean);
+        XMean = Arrays.copyOfRange(XMean, 0, (int) (XMean.length * percentage));
+
+        HierarchicalClusteringInstance.HCNode root = HierarchicalClusteringInstance.formTree(
+                Arrays.stream(XMean)
+                        .map(elem -> new VectorWithBool(Arrays.copyOfRange(elem, 0, elem.length - 1), elem[elem.length - 1] == 1))
+                        .collect(Collectors.toList()));
+
+        HierarchicalClusteringInstance.HCNode child1 = root.getChild1();
+        HierarchicalClusteringInstance.HCNode child2 = root.getChild2();
+
+        int child1SickAmount = getSickAmountTree(child1);
+        int child2SickAmount = getSickAmountTree(child2);
+
+        int [][] confusionMatrix = new int[2][2];
+
+        confusionMatrix[0][0] = child1.getGroup().size() - child1SickAmount;
+        confusionMatrix[0][1] = child1SickAmount;
+
+        confusionMatrix[1][0] = child2.getGroup().size() - child2SickAmount;
+        confusionMatrix[1][1] = child2SickAmount;
+
+        if(child1SickAmount > child2SickAmount) {
+            int[] aux = confusionMatrix[0];
+            confusionMatrix[0] = confusionMatrix[1];
+            confusionMatrix[1] = aux;
+        }
+
+        return confusionMatrix;
+    }
+
+    private static int getSickAmountTree(HierarchicalClusteringInstance.HCNode tree) {
+        return tree.getGroup().stream()
+                .map(e -> ((VectorWithBool) e).isBool() ? 1 : 0)
+                .reduce(0, Integer::sum);
+    }
+
+    private static void shuffleArray(double[][] ar)
+    {
+        Random rnd = ThreadLocalRandom.current();
+        for (int i = ar.length - 1; i > 0; i--)
+        {
+            int index = rnd.nextInt(i + 1);
+            double [] a = ar[index];
+            ar[index] = ar[i];
+            ar[i] = a;
+        }
     }
 }
