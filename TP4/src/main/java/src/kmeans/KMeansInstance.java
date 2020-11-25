@@ -78,6 +78,20 @@ public class KMeansInstance {
         points = newPoints;
     }
 
+    public double getVariance() {
+        double variance = 0;
+        for (List<Vector> list : points.values()) {
+            for(Vector v1 :  list) {
+                for(Vector v2 :  list) {
+                    variance += Math.pow(v1.distance(v2),2);
+                }
+            }
+            if(list.size() > 0)
+                variance /= list.size();
+        }
+        return variance;
+    }
+
     private static Map<Integer, List<Vector>> randomPointsInitializer(List<Vector> values, int K){
         Random rnd = new Random();
 
@@ -93,4 +107,5 @@ public class KMeansInstance {
 
         return newPoints;
     }
+
 }

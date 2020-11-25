@@ -155,7 +155,7 @@ public class Vector {
             }
         }
 
-        return Vector.scalarMultiplication(new Vector(values), vectors.get(0).dimension);
+        return Vector.scalarMultiplication(new Vector(values), 1.0/vectors.size());
     }
 
     @Override
