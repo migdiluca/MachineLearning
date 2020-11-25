@@ -19,7 +19,9 @@ import java.util.stream.Stream;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        System.out.println(Arrays.deepToString(hierarchicalClusteringConfusionMatrix(1)));
+//        System.out.println(Arrays.deepToString(hierarchicalClusteringConfusionMatrix(1)));
+
+        kohonenWrapper();
     }
 
     private void logisticRegression() throws IOException {
@@ -124,7 +126,33 @@ public class Main {
         return amount/(double)X.length;
     }
 
-    private static void kohonen(double[][] train, double[][] test, double[] Y){
+    private static void kohonenWrapper() throws IOException {
+        List<Map<String, String>> data = CsvReader.readCsv("./acath.csv", ",");
+
+        Double[][] valuesWithNull = new Double[data.size()][];
+        double[] Y = new double[data.size()];
+
+        for (int i=0 ; i<data.size(); i++){
+            Y[i] = Double.parseDouble(data.get(i).get("sigdz"));
+
+            valuesWithNull[i] = new Double[]{
+                    //toDoubleOrNull(data.get(i).get("sex")),
+                    toDoubleOrNull(data.get(i).get("age")),
+                    toDoubleOrNull(data.get(i).get("cad.dur")),
+                    toDoubleOrNull(data.get(i).get("choleste"))
+            };
+
+        }
+
+        double[][] XMean = valuesWithNullToMean(valuesWithNull);
+        double[][] XRemove = removeNullValues(valuesWithNull);
+
+        SetDivision sd = testAndTrainDivision(XMean, Y, 0.8);
+
+        kohonen(sd.train, sd.Ytrain, sd.test, sd.Ytest);
+    }
+
+    private static void kohonen(double[][] train, double[] yTrain, double[][] test, double[] yTest){
         int numberOfIterations = 10000;
         int inputDim = train[0].length;
         double timeConstant = numberOfIterations/Math.log(inputDim);
@@ -176,27 +204,32 @@ public class Main {
 
         for(int i = 0; i< train.length; i++){
             double[] sample = train[i];
-            double category = Y[i];
+            double category = yTrain[i];
             src.kohonen.Vector vector = new src.kohonen.Vector(sample);
             Lattice.Coord coord = kohonenMap.activate(vector);
 
             count[coord.getI()][coord.getJ()].inc(category);
         }
 
-        int errors = 0;
+        int[][] confusionMatrix = new int[2][2];
+        Arrays.fill(confusionMatrix[0], 0);
+        Arrays.fill(confusionMatrix[1], 0);
 
         //TEST
         for(int i=0; i<test.length; i++){
             double[] sample = test[i];
+            double expected = yTest[i];
             src.kohonen.Vector vector = new src.kohonen.Vector(sample);
             Lattice.Coord coord = kohonenMap.activate(vector);
 
             double predicted = count[coord.getI()][coord.getJ()].classify();
 
-            errors += Double.compare(predicted, Y[i]) == 0 ? 0 : 1;
+            confusionMatrix[(int) expected][(int) predicted] += 1;
         }
 
-        System.out.printf("%s / %s (%s)\n", errors, test.length, errors / (double) test.length);
+        System.out.printf("%s %s\n", confusionMatrix[0][0], confusionMatrix[0][1]);
+        System.out.printf("%s %s\n", confusionMatrix[1][0], confusionMatrix[1][1]);
+
     }
 
     private static void train(PerceptronInstance p, double[][] X, double[] Y){
