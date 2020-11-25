@@ -20,56 +20,59 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         System.out.println(Arrays.deepToString(hierarchicalClusteringConfusionMatrix(1)));
-//
-//        List<Map<String, String>> data = CsvReader.readCsv("./acath.csv", ",");
-//
-//        Double[][] valuesWithNull = new Double[data.size()][];
-//        double[] Y = new double[data.size()];
-//
-//        for (int i=0 ; i<data.size(); i++){
-//            Y[i] = Double.parseDouble(data.get(i).get("sigdz"));
-//
-//            valuesWithNull[i] = new Double[]{
-//                    //toDoubleOrNull(data.get(i).get("sex")),
-//                    toDoubleOrNull(data.get(i).get("age")),
-//                    toDoubleOrNull(data.get(i).get("cad.dur")),
-//                    toDoubleOrNull(data.get(i).get("choleste"))
-//            };
-//
-//        }
-//
-//        double[][] XMean = valuesWithNullToMean(valuesWithNull);
-////        double[][] XRemove = removeNullValues(valuesWithNull);
-//
-//        SetDivision sd = testAndTrainDivision(XMean, Y, 0.8);
-//
-//        PerceptronInstance p1 = new PerceptronBuilder()
-//                .setActivationFunction(PerceptronBuilder.SIGMOID_ACTIVATION_FUNCTION)
-//                .setLearningRate(0.00000001)
-//                .setBias(1)
-//                .setDimension(sd.train[0].length)
-//                .create();
-//
-//        train(p1, sd.train, sd.Ytrain);
-//
-//        System.out.println(p1.getWeights().toString());
-//        int [][] confusionMatrix = new int[2][2];
-//        for(int i = 0; i < sd.test.length; i++) {
-//            double predictedProbability = p1.classify(new Vector(sd.test[i]));
-//            int expected = (int)sd.Ytest[i];
-//            int predicted = (int)Math.round(predictedProbability);
-//            confusionMatrix[expected][predicted] += 1;
-//        }
-//
-//        System.out.println(Arrays.deepToString(confusionMatrix));
-//        double prob0 = p1.classify(new Vector(new double []{0.0, 60.0, 2.0, 199.0}));
-//        double prob1 = p1.classify(new Vector(new double []{1.0, 60.0, 2.0, 199.0}));
-//
-//
-//        double probSex0 = fieldProbability(XMean, 0, 0);
-//        double probSex1 = fieldProbability(XMean, 0, 1);
-//
-//        System.out.println((probSex0 * prob0) + (prob1 * probSex1));
+    }
+
+    private void logisticRegression() throws IOException {
+
+        List<Map<String, String>> data = CsvReader.readCsv("./acath.csv", ",");
+
+        Double[][] valuesWithNull = new Double[data.size()][];
+        double[] Y = new double[data.size()];
+
+        for (int i=0 ; i<data.size(); i++){
+            Y[i] = Double.parseDouble(data.get(i).get("sigdz"));
+
+            valuesWithNull[i] = new Double[]{
+                    //toDoubleOrNull(data.get(i).get("sex")),
+                    toDoubleOrNull(data.get(i).get("age")),
+                    toDoubleOrNull(data.get(i).get("cad.dur")),
+                    toDoubleOrNull(data.get(i).get("choleste"))
+            };
+
+        }
+
+        double[][] XMean = valuesWithNullToMean(valuesWithNull);
+        double[][] XRemove = removeNullValues(valuesWithNull);
+
+        SetDivision sd = testAndTrainDivision(XMean, Y, 0.8);
+
+        PerceptronInstance p1 = new PerceptronBuilder()
+                .setActivationFunction(PerceptronBuilder.SIGMOID_ACTIVATION_FUNCTION)
+                .setLearningRate(0.00000001)
+                .setBias(1)
+                .setDimension(sd.train[0].length)
+                .create();
+
+        train(p1, sd.train, sd.Ytrain);
+
+        System.out.println(p1.getWeights().toString());
+        int [][] confusionMatrix = new int[2][2];
+        for(int i = 0; i < sd.test.length; i++) {
+            double predictedProbability = p1.classify(new Vector(sd.test[i]));
+            int expected = (int)sd.Ytest[i];
+            int predicted = (int)Math.round(predictedProbability);
+            confusionMatrix[expected][predicted] += 1;
+        }
+
+        System.out.println(Arrays.deepToString(confusionMatrix));
+        double prob0 = p1.classify(new Vector(new double []{0.0, 60.0, 2.0, 199.0}));
+        double prob1 = p1.classify(new Vector(new double []{1.0, 60.0, 2.0, 199.0}));
+
+
+        double probSex0 = fieldProbability(XMean, 0, 0);
+        double probSex1 = fieldProbability(XMean, 0, 1);
+
+        System.out.println((probSex0 * prob0) + (prob1 * probSex1));
     }
 
     private static class SetDivision {
