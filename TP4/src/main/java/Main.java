@@ -1,3 +1,6 @@
+import src.kohonen.KohonenMap;
+import src.kohonen.Lattice;
+import src.kohonen.SquareLattice;
 import src.hierarchicalClustering.HierarchicalClusteringInstance;
 import src.perceptron.PerceptronBuilder;
 import src.perceptron.PerceptronInstance;
@@ -116,6 +119,81 @@ public class Main {
             }
         }
         return amount/(double)X.length;
+    }
+
+    private static void kohonen(double[][] train, double[][] test, double[] Y){
+        int numberOfIterations = 10000;
+        int inputDim = train[0].length;
+        double timeConstant = numberOfIterations/Math.log(inputDim);
+        int dim = 5;
+
+        KohonenMap kohonenMap = new KohonenMap.Builder()
+                .setLattice(new SquareLattice(SquareLattice.cellGenerator(inputDim), dim))
+                .setTimeConstant(timeConstant)
+                .setLearningRateFunction(KohonenMap.Builder::learningRateFunction)
+                .setNeighborhoodFunction(KohonenMap.Builder::neighborhoodFunction)
+                .create();
+
+        for(int i=0; i<numberOfIterations; i++){
+            for(double[] sample : train){
+                src.kohonen.Vector vector = new src.kohonen.Vector(sample);
+                kohonenMap.step(vector);
+            }
+        }
+
+        //Frequency in each som cell
+        class ClassCount {
+            int classA, classB;
+
+            ClassCount(){
+                classA = 0;
+                classB = 0;
+            }
+
+            void inc(Double category){
+                if(Double.compare(category, 1) == 0){
+                    classA++;
+                }else{
+                    classB++;
+                }
+            }
+
+            double classify(){
+                return classA > classB ? 1.0 : 0.0;
+            }
+        }
+
+        ClassCount[][] count = new ClassCount[dim][dim];
+
+        for (int i=0; i<count.length; i++) {
+            count[i] = IntStream.range(0, dim)
+                    .mapToObj(v -> new ClassCount())
+                    .toArray(ClassCount[]::new);
+        }
+
+        for(int i = 0; i< train.length; i++){
+            double[] sample = train[i];
+            double category = Y[i];
+            src.kohonen.Vector vector = new src.kohonen.Vector(sample);
+            Lattice.Coord coord = kohonenMap.activate(vector);
+
+            count[coord.getI()][coord.getJ()].inc(category);
+        }
+
+        int errors = 0;
+
+        //TEST
+        for(int i=0; i<test.length; i++){
+            double[] sample = test[i];
+            src.kohonen.Vector vector = new src.kohonen.Vector(sample);
+            Lattice.Coord coord = kohonenMap.activate(vector);
+
+            double predicted = count[coord.getI()][coord.getJ()].classify();
+
+            errors += Double.compare(predicted, Y[i]) == 0 ? 0 : 1;
+        }
+
+        System.out.printf("%s / %s (%s)\n", errors, test.length, errors / (double) test.length);
     }
 
     private static void train(PerceptronInstance p, double[][] X, double[] Y){
