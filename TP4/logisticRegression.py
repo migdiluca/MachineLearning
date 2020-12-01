@@ -1,7 +1,8 @@
 import math
 from typing import List
 
-from sklearn.linear_model import LogisticRegression
+import statsmodels.api as sm
+
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split
 import csv
@@ -40,19 +41,28 @@ def replace_empty_with_mean(x: List[np.array]):
     return np.transpose(x_mean)
 
 
+def add_intercept(x):
+    result = []
+    for val in x:
+        result.append(np.append([1], val))
+    return result
+
+
 def apply_logistic_regression(headers):
     x, y = read_values(headers, 'sigdz')
     x_mean = replace_empty_with_mean(x)
 
+    x_mean = add_intercept(x_mean)
+
     x_train, x_test, y_train, y_test = train_test_split(x_mean, y, test_size=0.2)
 
-    clf = LogisticRegression(random_state=0).fit(x_train, y_train)
+    log_reg = sm.Logit(y_train, x_train).fit()
 
-    y_pred = clf.predict(x_test)
+    y_pred = log_reg.predict(x_test)
 
-    print(confusion_matrix(y_test, y_pred))
+    print(confusion_matrix(y_test, [1.0 if val > 0.5 else 0.0 for val in y_pred]))
 
-    return clf
+    return log_reg
 
 
 def sigmoid(x):
@@ -60,21 +70,27 @@ def sigmoid(x):
 
 
 def predict_manually(clf, value):
-    thetas = clf.coef_[0]
+    print(clf.params)
+    thetas = clf.params
 
-    theta0 = clf.intercept_
+    theta0 = thetas[0]
 
-    dot = np.dot(value, thetas)
+    dot = np.dot(value, thetas[1:])
 
     print("Manualmente")
     print(sigmoid(dot + theta0))
 
-    print("Por sklearn")
-    print(clf.predict_proba([value]))
+    print("Por statsmodel")
+    print(clf.predict([np.append([1], value)])[0])
 
 
-clf_without_sex = apply_logistic_regression(['age', 'cad.dur', 'choleste'])
+log_reg_without_sex = apply_logistic_regression(['age', 'cad.dur', 'choleste'])
 
-apply_logistic_regression(['sex', 'age', 'cad.dur', 'choleste'])
+log_reg_with_sex = apply_logistic_regression(['sex', 'age', 'cad.dur', 'choleste'])
 
-predict_manually(clf_without_sex, np.array([60.0, 2.0, 199.0]))
+predict_manually(log_reg_without_sex, np.array([60.0, 2.0, 199.0]))
+
+print(log_reg_without_sex.summary())
+
+print(log_reg_with_sex.summary())
+
