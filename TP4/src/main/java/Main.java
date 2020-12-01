@@ -22,15 +22,20 @@ import java.util.stream.Stream;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        logisticRegression();
+        KMeansGroupRun(5, 100, 0.5);
+        //KMeansRun(40, 1, 0.6);
+        //System.out.println(Arrays.deepToString(hierarchicalClusteringConfusionMatrix(0.8)));
     }
 
-    private static List<Vector> getDataWithBool() throws IOException {
+    private static List<List<Vector>> getDataWithBool(double percentage) throws IOException {
         List<Map<String, String>> data = CsvReader.readCsv("./acath.csv", ",");
 
+        double[] Y = new double[data.size()];
         Double[][] valuesWithNull = new Double[data.size()][];
 
         for (int i = 0; i < data.size(); i++) {
+            Y[i] = Double.parseDouble(data.get(i).get("sigdz"));
+
             valuesWithNull[i] = new Double[]{
                     toDoubleOrNull(data.get(i).get("sex")),
                     toDoubleOrNull(data.get(i).get("age")),
@@ -44,11 +49,15 @@ public class Main {
         double[][] XMean = valuesWithNullToMean(valuesWithNull);
         normalizeWrapperWrapper(XMean);
         shuffleArray(XMean);
-        XMean = Arrays.copyOfRange(XMean, 0, (int) (XMean.length * 0.8));
 
-        return Arrays.stream(XMean)
+        List<Vector> XMeanList = Arrays.stream(XMean)
                 .map(elem -> new VectorWithBool(Arrays.copyOfRange(elem, 0, elem.length - 1), elem[elem.length - 1] == 1))
                 .collect(Collectors.toList());
+
+        List<List<Vector>> resp = new ArrayList<>(2);
+        resp.add(XMeanList.subList(0, (int) (XMeanList.size() * percentage)));
+        resp.add(XMeanList.subList((int) (XMeanList.size() * percentage), XMeanList.size()));
+        return resp;
     }
 
     private static void normalizeWrapperWrapper(double [][] x) {
@@ -77,25 +86,60 @@ public class Main {
         return scale * (x - min) / (max - min);
     }
 
-    private static void KMeansRun(int iterations) throws IOException {
+    private static void KMeansGroupRun(int maxK, int groupSize, double percentage) throws IOException {
+        List<List<Vector>> data = getDataWithBool(percentage);
+        List<Vector> train = data.get(0);
+        List<Vector> test = data.get(1);
 
-        SetDivision setDivision = getData(0.8);
-        List<Vector> data = new ArrayList<>();
-        for (int i = 0; i < setDivision.train.length; i++) {
-            data.add(new Vector(setDivision.train[i]));
+        for (int k = 2; k <= maxK; k++) {
+            List<KMeansInstance> kMeansInstances = KMeansRunner.runKMeansGroupSimulation(train, groupSize, k);
+
+            int[][] confusionMatrix = new int[2][2];
+            for(Vector v : test) {
+                int expected = ((VectorWithBool) v).isBool() ? 1 : 0;
+                int predicted = classifyKMeansGroup(kMeansInstances, v);
+                confusionMatrix[expected][predicted] += 1;
+            }
+
+            System.out.println("k = " + k);
+            System.out.println(Arrays.deepToString(confusionMatrix));
+            System.out.println(( (double)(confusionMatrix[0][0] + confusionMatrix[1][1])) / (confusionMatrix[0][1] + confusionMatrix[1][0] + confusionMatrix[1][1] + confusionMatrix[0][0]));
         }
+    }
 
-        KMeansInstance kMeansInstance = KMeansRunner.runKMeansSimulation(data, iterations);
-
-        int[][] confusionMatrix = new int[2][2];
-        for (int i = 0; i < setDivision.test.length; i++) {
-            double predictedProbability = kMeansInstance.classify(new Vector(setDivision.test[i]));
-            int expected = (int) setDivision.Ytest[i];
-            int predicted = (int) Math.round(predictedProbability);
-            confusionMatrix[expected][predicted] += 1;
+    private static int classifyKMeansGroup(List<KMeansInstance> instances, Vector vector) {
+        int trueAmounts = 0;
+        for (KMeansInstance instance: instances) {
+            int predictedClass = instance.classify(vector);
+            List<Vector> classPoints = instance.getClassPoints(predictedClass);
+            trueAmounts += classPoints.stream().filter(e -> ((VectorWithBool) e).isBool()).count() > classPoints.size() / 2 ? 1 : 0;
         }
+        return trueAmounts >= instances.size() / 2 ? 1 : 0;
+    }
 
-        System.out.println(Arrays.deepToString(confusionMatrix));
+    private static void KMeansRun(int maxK, int iterations, double percentage) throws IOException {
+
+        List<List<Vector>> data = getDataWithBool(percentage);
+        List<Vector> train = data.get(0);
+        List<Vector> test = data.get(1);
+
+        for (int k = 2; k <= maxK; k++) {
+            KMeansInstance kMeansInstance = KMeansRunner.runKMeansSimulation(train, iterations, k);
+
+            int[][] confusionMatrix = new int[2][2];
+            for(Vector v : test) {
+                int predictedClass = kMeansInstance.classify(v);
+                int expected = ((VectorWithBool) v).isBool() ? 1 : 0;
+
+                List<Vector> classPoints = kMeansInstance.getClassPoints(predictedClass);
+                int predicted = classPoints.stream().filter(e -> ((VectorWithBool) e).isBool()).count() > classPoints.size() / 2 ? 1 : 0;
+                confusionMatrix[expected][predicted] += 1;
+            }
+
+            System.out.println("k = " + k);
+            System.out.println(Arrays.deepToString(confusionMatrix));
+            System.out.println(( (double)(confusionMatrix[0][0] + confusionMatrix[1][1])) / (confusionMatrix[0][1] + confusionMatrix[1][0] + confusionMatrix[1][1] + confusionMatrix[0][0]));
+        }
     }
 
     private static SetDivision getData(double percentage) throws IOException {
@@ -108,7 +152,7 @@ public class Main {
             Y[i] = Double.parseDouble(data.get(i).get("sigdz"));
 
             valuesWithNull[i] = new Double[]{
-                    //toDoubleOrNull(data.get(i).get("sex")),
+                    toDoubleOrNull(data.get(i).get("sex")),
                     toDoubleOrNull(data.get(i).get("age")),
                     toDoubleOrNull(data.get(i).get("cad.dur")),
                     toDoubleOrNull(data.get(i).get("choleste"))
@@ -128,7 +172,7 @@ public class Main {
 
         PerceptronInstance p1 = new PerceptronBuilder()
                 .setActivationFunction(PerceptronBuilder.SIGMOID_ACTIVATION_FUNCTION)
-                .setLearningRate(0.00000001)
+                .setLearningRate(0.0000000001)
                 .setBias(1)
                 .setDimension(sd.train[0].length)
                 .create();
@@ -144,11 +188,11 @@ public class Main {
         }
 
         System.out.println(Arrays.deepToString(confusionMatrix));
-        double prob0 = p1.classify(new Vector(new double[]{normalize(60.0, 82.0, 17.0, 1.0),
-                normalize(2.0, 416.0, 0.0, 1.0),
-                normalize(199.0,29.0, 576.0, 1.0)}));
-
-        System.out.println(prob0);
+//        double prob0 = p1.classify(new Vector(new double[]{normalize(60.0, 82.0, 17.0, 1.0),
+//                normalize(2.0, 416.0, 0.0, 1.0),
+//                normalize(199.0,29.0, 576.0, 1.0)}));
+//
+//        System.out.println(prob0);
 
     }
 
@@ -288,7 +332,7 @@ public class Main {
     }
 
     private static void train(PerceptronInstance p, double[][] X, double[] Y) {
-        int times = 50000;
+        int times = 200000;
         for (int t = 0; t < times; t++) {
             for (int i = 0; i < X.length; i++) {
                 double[] sample = X[i];
@@ -341,31 +385,41 @@ public class Main {
         return newArray.toArray(new double[0][0]);
     }
 
-    private static int[][] hierarchicalClusteringConfusionMatrix() throws IOException {
+    private static int[][] hierarchicalClusteringConfusionMatrix(double percentage) throws IOException {
 
-        HierarchicalClusteringInstance.HCNode root = HierarchicalClusteringInstance.formTree(getDataWithBool());
+        List<List<Vector>> data = getDataWithBool(percentage);
+        HierarchicalClusteringInstance.HCNode root = HierarchicalClusteringInstance.formTree(data.get(0));
 
-        HierarchicalClusteringInstance.HCNode child1 = root.getChild1();
-        HierarchicalClusteringInstance.HCNode child2 = root.getChild2();
+//        HierarchicalClusteringInstance.HCNode child1 = root.getChild1();
+//        HierarchicalClusteringInstance.HCNode child2 = root.getChild2();
+//
+//        int child1SickAmount = getSickAmountTree(child1);
+//        int child2SickAmount = getSickAmountTree(child2);
+//
+//        int[][] confusionMatrix = new int[2][2];
+//
+//        confusionMatrix[0][0] = child1.getGroup().size() - child1SickAmount;
+//        confusionMatrix[0][1] = child1SickAmount;
+//
+//        confusionMatrix[1][0] = child2.getGroup().size() - child2SickAmount;
+//        confusionMatrix[1][1] = child2SickAmount;
+//
+//        if (child1SickAmount > child2SickAmount) {
+//            int[] aux = confusionMatrix[0];
+//            confusionMatrix[0] = confusionMatrix[1];
+//            confusionMatrix[1] = aux;
+//        }
 
-        int child1SickAmount = getSickAmountTree(child1);
-        int child2SickAmount = getSickAmountTree(child2);
+        int[][] confusionMatrix2 = new int[2][2];
 
-        int[][] confusionMatrix = new int[2][2];
+        List<Vector> test = data.get(1);
+        for (Vector v: test) {
+            int expected = ((VectorWithBool) v).isBool() ? 1 : 0;
+            int predicted = root.classify(v) ? 1 : 0;
 
-        confusionMatrix[0][0] = child1.getGroup().size() - child1SickAmount;
-        confusionMatrix[0][1] = child1SickAmount;
-
-        confusionMatrix[1][0] = child2.getGroup().size() - child2SickAmount;
-        confusionMatrix[1][1] = child2SickAmount;
-
-        if (child1SickAmount > child2SickAmount) {
-            int[] aux = confusionMatrix[0];
-            confusionMatrix[0] = confusionMatrix[1];
-            confusionMatrix[1] = aux;
+            confusionMatrix2[expected][predicted]++;
         }
-
-        return confusionMatrix;
+        return confusionMatrix2;
     }
 
     private static int getSickAmountTree(HierarchicalClusteringInstance.HCNode tree) {

@@ -31,6 +31,10 @@ public class KMeansInstance {
         kMeans = new HashMap<>();
     }
 
+    public List<Vector> getClassPoints(int k) {
+        return points.get(k);
+    }
+
     public void train(List<Vector> values){
         allPoints = values;
         points = pointsInitializer.apply(values, K);

@@ -1,6 +1,7 @@
 package src.hierarchicalClustering;
 
 import src.utils.math.Vector;
+import src.utils.math.VectorWithBool;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -36,6 +37,24 @@ public class HierarchicalClusteringInstance {
 
         public double distance(HCNode other){
             return Math.abs(centroid.distance(other.centroid));
+        }
+
+
+        public boolean classify(Vector vector) {
+            double dChild1 = Double.MAX_VALUE;
+            double dChild2 = Double.MAX_VALUE;
+            if(getChild1() != null) {
+                dChild1 = getChild1().centroid.distance(vector);
+            }
+            if (getChild2() != null) {
+                dChild2 = getChild2().centroid.distance(vector);
+            }
+
+            HCNode closerNode = dChild1 < dChild2 ? getChild1() : getChild2();
+            return closerNode.getGroup().stream()
+                    .filter(v -> ((VectorWithBool) v).isBool())
+                    .count()
+                    >= closerNode.getGroup().size() / 2;
         }
 
         public HCNode getChild1() {
