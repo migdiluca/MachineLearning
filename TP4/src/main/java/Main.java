@@ -22,8 +22,8 @@ import java.util.stream.Stream;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        KMeansGroupRun(5, 100, 0.5);
-        //KMeansRun(40, 1, 0.6);
+        System.out.println(Arrays.deepToString(hierarchicalClusteringConfusionMatrix(0.8)));
+        //KMeansRun(6, 40, 0.8);
         //System.out.println(Arrays.deepToString(hierarchicalClusteringConfusionMatrix(0.8)));
     }
 
@@ -112,9 +112,9 @@ public class Main {
         for (KMeansInstance instance: instances) {
             int predictedClass = instance.classify(vector);
             List<Vector> classPoints = instance.getClassPoints(predictedClass);
-            trueAmounts += classPoints.stream().filter(e -> ((VectorWithBool) e).isBool()).count() > classPoints.size() / 2 ? 1 : 0;
+            trueAmounts += classPoints.stream().filter(e -> ((VectorWithBool) e).isBool()).count() > ((double)classPoints.size()) / 2 ? 1 : 0;
         }
-        return trueAmounts >= instances.size() / 2 ? 1 : 0;
+        return trueAmounts >= ((double)instances.size()) / 2 ? 1 : 0;
     }
 
     private static void KMeansRun(int maxK, int iterations, double percentage) throws IOException {
@@ -132,7 +132,7 @@ public class Main {
                 int expected = ((VectorWithBool) v).isBool() ? 1 : 0;
 
                 List<Vector> classPoints = kMeansInstance.getClassPoints(predictedClass);
-                int predicted = classPoints.stream().filter(e -> ((VectorWithBool) e).isBool()).count() > classPoints.size() / 2 ? 1 : 0;
+                int predicted = classPoints.stream().filter(e -> ((VectorWithBool) e).isBool()).count() > ((double)classPoints.size()) / 2 ? 1 : 0;
                 confusionMatrix[expected][predicted] += 1;
             }
 
@@ -390,32 +390,12 @@ public class Main {
         List<List<Vector>> data = getDataWithBool(percentage);
         HierarchicalClusteringInstance.HCNode root = HierarchicalClusteringInstance.formTree(data.get(0));
 
-//        HierarchicalClusteringInstance.HCNode child1 = root.getChild1();
-//        HierarchicalClusteringInstance.HCNode child2 = root.getChild2();
-//
-//        int child1SickAmount = getSickAmountTree(child1);
-//        int child2SickAmount = getSickAmountTree(child2);
-//
-//        int[][] confusionMatrix = new int[2][2];
-//
-//        confusionMatrix[0][0] = child1.getGroup().size() - child1SickAmount;
-//        confusionMatrix[0][1] = child1SickAmount;
-//
-//        confusionMatrix[1][0] = child2.getGroup().size() - child2SickAmount;
-//        confusionMatrix[1][1] = child2SickAmount;
-//
-//        if (child1SickAmount > child2SickAmount) {
-//            int[] aux = confusionMatrix[0];
-//            confusionMatrix[0] = confusionMatrix[1];
-//            confusionMatrix[1] = aux;
-//        }
-
         int[][] confusionMatrix2 = new int[2][2];
 
         List<Vector> test = data.get(1);
         for (Vector v: test) {
             int expected = ((VectorWithBool) v).isBool() ? 1 : 0;
-            int predicted = root.classify(v) ? 1 : 0;
+            int predicted = root.classify(v, 10) ? 1 : 0;
 
             confusionMatrix2[expected][predicted]++;
         }

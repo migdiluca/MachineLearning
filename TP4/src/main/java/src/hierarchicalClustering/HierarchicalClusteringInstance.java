@@ -25,7 +25,7 @@ public class HierarchicalClusteringInstance {
             centroid = Vector.centroid(group);
         }
 
-        public HCNode(Vector leaf){
+        public HCNode(Vector leaf) {
             group = new LinkedList<>();
             group.add(leaf);
 
@@ -35,7 +35,7 @@ public class HierarchicalClusteringInstance {
             child2 = null;
         }
 
-        public double distance(HCNode other){
+        public double distance(HCNode other) {
             return Math.abs(centroid.distance(other.centroid));
         }
 
@@ -43,7 +43,18 @@ public class HierarchicalClusteringInstance {
         public boolean classify(Vector vector) {
             double dChild1 = Double.MAX_VALUE;
             double dChild2 = Double.MAX_VALUE;
-            if(getChild1() != null) {
+
+            System.out.println(getChild1().getGroup().stream()
+                    .filter(v -> ((VectorWithBool) v).isBool())
+                    .count());
+            System.out.println(getChild1().getGroup().size());
+
+
+            System.out.println(getChild2().getGroup().stream()
+                    .filter(v -> ((VectorWithBool) v).isBool())
+                    .count());
+            System.out.println(getChild2().getGroup().size());
+            if (getChild1() != null) {
                 dChild1 = getChild1().centroid.distance(vector);
             }
             if (getChild2() != null) {
@@ -54,7 +65,36 @@ public class HierarchicalClusteringInstance {
             return closerNode.getGroup().stream()
                     .filter(v -> ((VectorWithBool) v).isBool())
                     .count()
-                    >= closerNode.getGroup().size() / 2;
+                    >= ((double)closerNode.getGroup().size()) / 2;
+        }
+
+        public boolean classify(Vector vector, int maxHeight) {
+
+            HCNode currentNode = this;
+            HCNode closerNode = null;
+            int height = 0;
+            while (currentNode != null && (maxHeight <= 0 || height < maxHeight)) {
+                double dChild1 = Double.MAX_VALUE;
+                double dChild2 = Double.MAX_VALUE;
+                if (currentNode.getChild1() == null && currentNode.getChild2() == null) {
+                    currentNode = null;
+                } else {
+                    if (currentNode.getChild1() != null) {
+                        dChild1 = currentNode.getChild1().centroid.distance(vector);
+                    }
+                    if (currentNode.getChild2() != null) {
+                        dChild2 = currentNode.getChild2().centroid.distance(vector);
+                    }
+
+                    height++;
+                    closerNode = dChild1 < dChild2 ? currentNode.getChild1() : currentNode.getChild2();
+                    currentNode = closerNode;
+                }
+            }
+            return closerNode.getGroup().stream()
+                    .filter(v -> ((VectorWithBool) v).isBool())
+                    .count()
+                    >= ((double)closerNode.getGroup().size()) / 2;
         }
 
         public HCNode getChild1() {
@@ -78,20 +118,20 @@ public class HierarchicalClusteringInstance {
         }
     }
 
-    public static HCNode formTree(List<Vector> values){
+    public static HCNode formTree(List<Vector> values) {
         List<HCNode> groups = values.stream()
                 .map(HCNode::new)
                 .collect(Collectors.toList());
 
-        while(groups.size() > 1){
+        while (groups.size() > 1) {
             int iMin = -1, jMin = -1;
             double minDistance = Double.MAX_VALUE;
 
-            for(int i=0; i<groups.size(); i++){
-                for(int j=0; j<i; j++){
+            for (int i = 0; i < groups.size(); i++) {
+                for (int j = 0; j < i; j++) {
                     double newDistance = groups.get(i).distance(groups.get(j));
 
-                    if(newDistance < minDistance){
+                    if (newDistance < minDistance) {
                         minDistance = newDistance;
 
                         iMin = i;
