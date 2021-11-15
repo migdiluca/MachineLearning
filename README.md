@@ -6,6 +6,7 @@ This project was made as an assignment for a course called 'Aprendizaje automát
 ## Project contents
 The project contains several programs developed in Java, in each of these there are implementations of the following machine learning methods:
 
+* Naive Bayes
 * ID3
 * KNN
 * Perceptron
